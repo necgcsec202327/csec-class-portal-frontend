@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSE – C Section | Announcements, Events, Resources</title>
+    <meta name="description" content="CSE – C Section | Announcements, Events, Resources">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <a href="#main-content" class="visually-hidden-focusable">Skip to content</a>
+    <header>
+        <div class="container">
+            <a href="index.html" class="logo" aria-label="CSE – C Section Home"><h1>CSE – C</h1></a>
+            <nav aria-label="Primary">
+                <ul class="nav-links" id="primary-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="updates.html">Updates</a></li>
+                    <li><a href="events.html">Events</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </nav>
+            <div class="header-right">
+                <button id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
+                <button class="hamburger" aria-label="Toggle navigation" aria-controls="primary-nav" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+        <main id="main-content" role="main">
+        <section id="events-calendar">
+            <div class="container">
+                <h2><i class="fa-solid fa-calendar-days"></i> Events Calendar</h2>
+                <div id='calendar'></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023-27 CSE – C Section | <a href="admin/login.html">Admin Login</a></p>
+        </div>
+    </footer>
+
+    <!-- Event Modal -->
+    <div id="event-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="event-modal-title"></h2>
+            <p id="event-modal-date"></p>
+            <p id="event-modal-description"></p>
+            <a href="#" id="event-modal-link" target="_blank" class="register-button">Register</a>
+        </div>
+    </div>
+
+    <script src="js/events.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

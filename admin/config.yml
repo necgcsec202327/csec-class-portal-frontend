@@ -1,0 +1,32 @@
+backend:
+  name: git-gateway
+  branch: main # Or master, depending on your repository's default branch
+
+media_folder: "public/resources" # Where to store uploaded files
+public_folder: "/resources"
+
+collections:
+  - name: "announcements"
+    label: "Announcements"
+    folder: "data"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Description", name: "description", widget: "markdown" }
+    format: "json"
+    file: "data/announcements.json"
+
+  - name: "events"
+    label: "Events"
+    folder: "data"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Event Date", name: "date", widget: "datetime" }
+      - { label: "Description", name: "description", widget: "markdown" }
+      - { label: "Google Form URL", name: "form_url", widget: "string" }
+    format: "json"
+    file: "data/events.json"

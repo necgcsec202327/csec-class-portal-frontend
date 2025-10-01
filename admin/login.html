@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSE – C Section | Announcements, Events, Resources</title>
+    <meta name="description" content="CSE – C Section | Announcements, Events, Resources">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="../index.html" class="logo" aria-label="CSE – C Section Home"><h1>CSE – C Section Portal</h1></a>
+            <nav aria-label="Primary">
+                <ul class="nav-links" id="primary-nav">
+                    <li><a href="../index.html">Home</a></li>
+                </ul>
+            </nav>
+            <div class="header-right">
+                <button id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
+                <button class="hamburger" aria-label="Toggle navigation" aria-controls="primary-nav" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <div class="login-container">
+                <h2><i class="fa-solid fa-user-shield"></i> Admin Login</h2>
+                <input type="password" id="password" placeholder="Enter password">
+                <button id="login-button">Login</button>
+                <p id="error-message" style="color: #e74c3c;"></p>
+            </div>
+        </div>
+    </main>
+    <script src="../js/main.js"></script>
+    <script src="../js/admin-login.js"></script>
+</body>
+</html>

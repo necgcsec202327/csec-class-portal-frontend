@@ -1,0 +1,22 @@
+[
+  {
+    "date": "2025-09-28",
+    "title": "Welcome to the Class Portal!",
+    "description": "This is the first announcement. We're excited to launch this portal for our class."
+  },
+  {
+    "date": "2025-09-27",
+    "title": "Mid-term Exam Schedule",
+    "description": "The mid-term exam schedule has been released. Please check the resources page for the detailed schedule."
+  },
+  {
+    "date": "2025-09-26",
+    "title": "Guest Lecture on Friday",
+    "description": "We have a guest lecture on Friday by Dr. Jane Doe on the topic of 'Modern Web Development'."
+  },
+  {
+    "date": "2025-09-25",
+    "title": "Project Submission Deadline",
+    "description": "The deadline for project submission is approaching. Please submit your projects by October 5th."
+  }
+]

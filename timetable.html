@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSE – C Section | Timetable</title>
+  <meta name="description" content="CSE – C Section timetable viewer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <a href="#main-content" class="visually-hidden-focusable">Skip to content</a>
+  <header>
+    <div class="container">
+  <a href="index.html" class="logo" aria-label="CSE – C Section Home"><h1>CSE – C</h1></a>
+      <nav aria-label="Primary">
+        <ul class="nav-links" id="primary-nav">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="updates.html">Updates</a></li>
+          <li><a href="events.html">Events</a></li>
+          <li><a href="resources.html">Resources</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </nav>
+      <div class="header-right">
+        <button id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        <button class="hamburger" aria-label="Toggle navigation" aria-controls="primary-nav" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" role="main">
+    <section id="timetable-section">
+      <div class="container">
+        <h2><i class="fa-solid fa-table"></i> Timetable</h2>
+        <div id="timetable-viewer" class="card" style="padding:0; overflow:hidden;">
+          <!-- Viewer content injected here -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+  <p>&copy; 2023-27 CSE – C Section | <a href="admin/login.html">Admin Login</a></p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/timetable.js"></script>
+</body>
+</html>

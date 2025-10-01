@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSE – C Section | Announcements, Events, Resources</title>
+    <meta name="description" content="CSE – C Section | Announcements, Events, Resources">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <a href="#main-content" class="visually-hidden-focusable">Skip to content</a>
+    <header>
+        <div class="container">
+            <a href="index.html" class="logo" aria-label="CSE – C Section Home"><h1>CSE – C</h1></a>
+            <nav aria-label="Primary">
+                <ul class="nav-links" id="primary-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="updates.html">Updates</a></li>
+                    <li><a href="events.html">Events</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </nav>
+            <div class="header-right">
+                <button id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
+                <button class="hamburger" aria-label="Toggle navigation" aria-controls="primary-nav" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <section id="resources">
+            <div class="container">
+                <h2><i class="fa-solid fa-book"></i> Resources</h2>
+
+                <nav id="resource-breadcrumb" class="breadcrumb" aria-label="Breadcrumb">
+                    <!-- Breadcrumb will be injected here -->
+                </nav>
+
+                <div class="resource-toolbar">
+                    <div class="view-toggle" role="group" aria-label="View toggle">
+                        <button id="view-grid" class="button-secondary" aria-pressed="true"><i class="fa-solid fa-grip"></i> Grid</button>
+                        <button id="view-list" class="button-secondary" aria-pressed="false"><i class="fa-solid fa-list"></i> List</button>
+                    </div>
+                    <div class="resource-search" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <input type="text" id="resource-search-input" placeholder="Search in this folder..." aria-label="Search resources">
+                        <select id="filter-subject" aria-label="Filter by subject"><option value="">All Subjects</option></select>
+                        <select id="filter-semester" aria-label="Filter by semester"><option value="">All Semesters</option></select>
+                        <select id="filter-type" aria-label="Filter by type"><option value="">All Types</option><option>PDF</option><option>Doc</option><option>Sheet</option><option>Slide</option><option>Video</option><option>Link</option></select>
+                    </div>
+                </div>
+
+                <div id="resource-explorer" class="resource-grid" role="list">
+                    <!-- Items render here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023-27 CSE – C Section</p>
+        </div>
+    </footer>
+    <script src="js/resources.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

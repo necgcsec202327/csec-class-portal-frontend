@@ -1,0 +1,30 @@
+{
+  "notes": [
+    {
+      "title": "Chapter 1 Notes (PDF)",
+      "url": "/resources/notes_chapter1.pdf"
+    },
+    {
+      "title": "Chapter 2 Notes (Google Drive)",
+      "url": "https://docs.google.com/document/d/..."
+    }
+  ],
+  "slides": [
+    {
+      "title": "Lecture 1 Slides (Google Drive)",
+      "url": "https://docs.google.com/presentation/d/..."
+    }
+  ],
+  "recordings": [
+    {
+      "title": "Lecture 1 Recording (Dropbox)",
+      "url": "https://www.dropbox.com/s/..."
+    }
+  ],
+  "external_links": [
+    {
+      "title": "MDN Web Docs",
+      "url": "https://developer.mozilla.org/en-US/"
+    }
+  ]
+}
