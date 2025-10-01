@@ -1,0 +1,5 @@
+# Handle client-side routing
+/*    /index.html   200
+
+# API calls should not be redirected
+/api/*  https://api.yourdomain.com/api/:splat  200
