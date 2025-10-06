@@ -831,6 +831,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const stripIds = (n) => { delete n.id; if (n.children) n.children.forEach(stripIds); };
             stripIds(clean);
             
+            console.log('🌳 Frontend: Saving resources tree:', clean);
+            console.log('🌳 Tree structure check:', {
+                hasName: !!clean.name,
+                type: clean.type,
+                hasChildren: Array.isArray(clean.children),
+                childrenCount: clean.children?.length || 0
+            });
+            
             await window.API.call(window.CONFIG.ENDPOINTS.RESOURCES, {
                 method: 'PUT',
                 body: JSON.stringify(clean)
@@ -838,6 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus('Resources saved successfully!', 'success');
         } catch (error) {
             console.error('Error saving resources:', error);
+            console.error('Error details:', error.message);
             showStatus('Failed to save resources', 'error');
         }
     }
