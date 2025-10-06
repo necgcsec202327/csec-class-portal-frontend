@@ -51,45 +51,66 @@ document.addEventListener('DOMContentLoaded', () => {
     // Trigger click on the first tab to initialize view
     tabs[0].click();
 
-    // Load existing data
-    fetch('../data/announcements.json')
-        .then(response => response.json())
-        .then(data => {
-            announcementsData = data;
-            renderAnnouncements();
-        });
-
-    fetch('../data/events.json')
-        .then(response => response.json())
-        .then(data => {
-            eventsData = data;
-            renderEvents();
-        });
-    
-    fetch('../data/resources.json')
-        .then(response => response.json())
-        .then(data => {
-            // Normalize to hierarchical tree
-            if (data && data.type === 'folder' && Array.isArray(data.children)) {
-                resourceTree = addIdsToTree(data);
-            } else {
-                resourceTree = legacyToTree(data || {});
+    // Load existing data using API
+    async function loadData() {
+        try {
+            // Load announcements
+            try {
+                const announcements = await window.API.get(window.CONFIG.ENDPOINTS.ANNOUNCEMENTS, 'announcements.json');
+                announcementsData = announcements || [];
+                renderAnnouncements();
+            } catch (error) {
+                console.error('Failed to load announcements:', error);
+                showStatus('Failed to load announcements', 'error');
+                announcementsData = [];
+                renderAnnouncements();
             }
-            renderResources();
-        })
-        .catch(() => {
-            // start with empty tree
-            resourceTree = { id: uid(), name: 'Resources', type: 'folder', children: [] };
-            renderResources();
-        });
 
-    fetch('../data/timetable.json')
-        .then(response => response.json())
-        .then(data => {
-            timetableData = Object.assign({ url: '', type: 'image' }, data || {});
-            renderTimetable();
-        })
-        .catch(() => renderTimetable());
+            // Load events
+            try {
+                const events = await window.API.get(window.CONFIG.ENDPOINTS.EVENTS, 'events.json');
+                eventsData = events || [];
+                renderEvents();
+            } catch (error) {
+                console.error('Failed to load events:', error);
+                showStatus('Failed to load events', 'error');
+                eventsData = [];
+                renderEvents();
+            }
+
+            // Load resources
+            try {
+                const resources = await window.API.get(window.CONFIG.ENDPOINTS.RESOURCES, 'resources.json');
+                if (resources && resources.type === 'folder' && Array.isArray(resources.children)) {
+                    resourceTree = addIdsToTree(resources);
+                } else {
+                    resourceTree = legacyToTree(resources || {});
+                }
+                renderResources();
+            } catch (error) {
+                console.error('Failed to load resources:', error);
+                resourceTree = { id: uid(), name: 'Resources', type: 'folder', children: [] };
+                renderResources();
+            }
+
+            // Load timetable
+            try {
+                const timetable = await window.API.get(window.CONFIG.ENDPOINTS.TIMETABLE, 'timetable.json');
+                timetableData = Object.assign({ url: '', type: 'image' }, timetable || {});
+                renderTimetable();
+            } catch (error) {
+                console.error('Failed to load timetable:', error);
+                renderTimetable();
+            }
+
+        } catch (error) {
+            console.error('Error loading data:', error);
+            showStatus('Failed to load data from server', 'error');
+        }
+    }
+
+    // Initialize data loading
+    loadData();
 
     function renderAnnouncements() {
         announcementsEditor.innerHTML = '';
@@ -753,38 +774,92 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Save and download
-    document.getElementById('save-announcements').addEventListener('click', () => {
-        downloadJSON(announcementsData, 'announcements.json');
-    });
+    // ===== SAVE TO API (Instead of downloading JSON) =====
+    
+    // Status message helper
+    const showStatus = (message, type = 'info') => {
+        // Remove existing status messages
+        document.querySelectorAll('.status-message').forEach(el => el.remove());
+        
+        const statusEl = document.createElement('div');
+        statusEl.className = `status-message status-${type}`;
+        statusEl.textContent = message;
+        statusEl.style.cssText = `
+            position: fixed; top: 20px; right: 20px; z-index: 10000;
+            padding: 12px 20px; border-radius: 6px; color: white;
+            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        `;
+        document.body.appendChild(statusEl);
+        
+        setTimeout(() => statusEl.remove(), 3000);
+    };
 
-    document.getElementById('save-events').addEventListener('click', () => {
-        downloadJSON(eventsData, 'events.json');
-    });
-
-    document.getElementById('save-resources').addEventListener('click', () => {
-        // Save hierarchical tree (strip runtime-only ids for cleanliness)
-        const clean = JSON.parse(JSON.stringify(resourceTree));
-        const stripIds = (n) => { delete n.id; if (n.children) n.children.forEach(stripIds); };
-        stripIds(clean);
-        downloadJSON(clean, 'resources.json');
-    });
-
-    document.getElementById('save-timetable').addEventListener('click', () => {
-        downloadJSON(timetableData, 'timetable.json');
-    });
-
-    function downloadJSON(data, filename) {
-        const jsonStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    async function saveAnnouncements() {
+        try {
+            showStatus('Saving announcements...', 'info');
+            await window.API.call(window.CONFIG.ENDPOINTS.ANNOUNCEMENTS, {
+                method: 'PUT',
+                body: JSON.stringify({ items: announcementsData })
+            });
+            showStatus('Announcements saved successfully!', 'success');
+        } catch (error) {
+            console.error('Error saving announcements:', error);
+            showStatus('Failed to save announcements', 'error');
+        }
     }
+
+    async function saveEvents() {
+        try {
+            showStatus('Saving events...', 'info');
+            await window.API.call(window.CONFIG.ENDPOINTS.EVENTS, {
+                method: 'PUT',
+                body: JSON.stringify({ items: eventsData })
+            });
+            showStatus('Events saved successfully!', 'success');
+        } catch (error) {
+            console.error('Error saving events:', error);
+            showStatus('Failed to save events', 'error');
+        }
+    }
+
+    async function saveResources() {
+        try {
+            showStatus('Saving resources...', 'info');
+            // Clean the tree (remove IDs) before sending
+            const clean = JSON.parse(JSON.stringify(resourceTree));
+            const stripIds = (n) => { delete n.id; if (n.children) n.children.forEach(stripIds); };
+            stripIds(clean);
+            
+            await window.API.call(window.CONFIG.ENDPOINTS.RESOURCES, {
+                method: 'PUT',
+                body: JSON.stringify(clean)
+            });
+            showStatus('Resources saved successfully!', 'success');
+        } catch (error) {
+            console.error('Error saving resources:', error);
+            showStatus('Failed to save resources', 'error');
+        }
+    }
+
+    async function saveTimetable() {
+        try {
+            showStatus('Saving timetable...', 'info');
+            await window.API.call(window.CONFIG.ENDPOINTS.TIMETABLE, {
+                method: 'PUT',
+                body: JSON.stringify(timetableData)
+            });
+            showStatus('Timetable saved successfully!', 'success');
+        } catch (error) {
+            console.error('Error saving timetable:', error);
+            showStatus('Failed to save timetable', 'error');
+        }
+    }
+
+    document.getElementById('save-announcements').addEventListener('click', saveAnnouncements);
+    document.getElementById('save-events').addEventListener('click', saveEvents);
+    document.getElementById('save-resources').addEventListener('click', saveResources);
+    document.getElementById('save-timetable').addEventListener('click', saveTimetable);
 
     // Logout
     document.getElementById('logout-button').addEventListener('click', () => {

@@ -179,8 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Load data and bootstrap
-    fetch('data/resources.json')
-        .then(r => r.json())
+    window.API.get(window.CONFIG.ENDPOINTS.RESOURCES, 'resources.json')
         .then(data => {
             // If already hierarchical (has name/type/children), use as-is; else adapt
             if (data && data.type === 'folder' && Array.isArray(data.children)) {

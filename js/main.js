@@ -90,11 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const announcementsList = document.getElementById('announcements-list');
     if (announcementsList) {
         showSkeletonLoader(announcementsList, 3);
-        fetch('data/announcements.json')
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
+        window.API.get(window.CONFIG.ENDPOINTS.ANNOUNCEMENTS, 'announcements.json')
             .then(data => {
                 announcementsList.innerHTML = '';
                 if (data.length === 0) {

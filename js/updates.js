@@ -23,11 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     showSkeletonLoader(allAnnouncementsList, 5);
 
-    fetch('data/announcements.json')
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-        })
+    window.API.get(window.CONFIG.ENDPOINTS.ANNOUNCEMENTS, 'announcements.json')
         .then(data => {
             allAnnouncements = data;
             if (data.length === 0) {
