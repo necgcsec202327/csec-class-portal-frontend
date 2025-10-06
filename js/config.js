@@ -15,7 +15,7 @@
         
         // API endpoints
         ENDPOINTS: {
-            AUTH: '/auth',
+            AUTH: '/auth/login',
             ANNOUNCEMENTS: '/announcements',
             EVENTS: '/events',
             RESOURCES: '/resources',
@@ -45,9 +45,8 @@
         
         // Production environment detection
         if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            // TODO: Update this to your actual Render backend URL after deployment
-            // Example: config.API_BASE_URL = 'https://csec-portal-backend.onrender.com/api';
-            config.API_BASE_URL = 'https://your-backend-app.onrender.com/api';
+            // Updated with your actual Render backend URL
+            config.API_BASE_URL = 'https://csec-class-portal-backend.onrender.com/api';
         }
         
         return config;
