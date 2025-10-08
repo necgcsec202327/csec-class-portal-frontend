@@ -16,36 +16,84 @@ document.addEventListener('DOMContentLoaded', () => {
         folder: 'fa-folder',
         pdf: 'fa-file-pdf',
         doc: 'fa-file-word',
-        sheet: 'fa-file-excel',
-        slide: 'fa-file-powerpoint',
-        video: 'fa-file-video',
+        docx: 'fa-file-word',
+        ppt: 'fa-file-powerpoint',
+        pptx: 'fa-file-powerpoint',
+        xls: 'fa-file-excel',
+        xlsx: 'fa-file-excel',
+        jpg: 'fa-file-image',
+        jpeg: 'fa-file-image',
+        png: 'fa-file-image',
+        gif: 'fa-file-image',
+        mp4: 'fa-file-video',
+        avi: 'fa-file-video',
+        mov: 'fa-file-video',
+        txt: 'fa-file-text',
+        zip: 'fa-file-zipper',
+        rar: 'fa-file-zipper',
         link: 'fa-up-right-from-square',
         file: 'fa-file'
     };
 
-    const detectIcon = (url, title) => {
-        const t = (title || '').toLowerCase();
-        const u = (url || '').toLowerCase();
-        if (u.endsWith('.pdf') || t.includes('pdf')) return ICONS.pdf;
-        if (u.includes('docs.google.com/document')) return ICONS.doc;
-        if (u.includes('docs.google.com/spreadsheets')) return ICONS.sheet;
-        if (u.includes('docs.google.com/presentation')) return ICONS.slide;
-        if (u.includes('dropbox') || u.endsWith('.mp4') || t.includes('record')) return ICONS.video;
-        if (u.startsWith('http')) return ICONS.link;
+    const detectIcon = (name, url) => {
+        const fileName = (name || '').toLowerCase();
+        const fileUrl = (url || '').toLowerCase();
+        
+        // Check by file extension
+        const ext = fileName.split('.').pop();
+        if (ICONS[ext]) return ICONS[ext];
+        
+        // Check by URL patterns
+        if (fileUrl.includes('docs.google.com/document')) return ICONS.doc;
+        if (fileUrl.includes('docs.google.com/spreadsheets')) return ICONS.xls;
+        if (fileUrl.includes('docs.google.com/presentation')) return ICONS.ppt;
+        if (fileUrl.startsWith('http')) return ICONS.link;
+        
+        // Check by data URL
+        if (fileUrl.startsWith('data:application/pdf')) return ICONS.pdf;
+        if (fileUrl.startsWith('data:image/')) return ICONS.jpg;
+        if (fileUrl.startsWith('data:application/vnd.openxmlformats-officedocument.presentationml.presentation')) return ICONS.pptx;
+        if (fileUrl.startsWith('data:application/vnd.openxmlformats-officedocument.wordprocessingml.document')) return ICONS.docx;
+        if (fileUrl.startsWith('data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) return ICONS.xlsx;
+        
         return ICONS.file;
     };
 
-    const buildTreeFromLegacy = (data) => ({
-        name: 'Resources',
-        type: 'folder',
-        children: [
-            { name: 'Notes', type: 'folder', children: (data.notes || []).map(x => ({ name: x.title, type: 'file', url: x.url })) },
-            { name: 'Slides', type: 'folder', children: (data.slides || []).map(x => ({ name: x.title, type: 'file', url: x.url })) },
-            { name: 'Recordings', type: 'folder', children: (data.recordings || []).map(x => ({ name: x.title, type: 'file', url: x.url })) },
-            { name: 'External Links', type: 'folder', children: (data.external_links || []).map(x => ({ name: x.title, type: 'file', url: x.url })) }
-        ]
-    });
+    const getFileSize = (dataUrl) => {
+        if (!dataUrl || !dataUrl.startsWith('data:')) return '';
+        try {
+            const base64 = dataUrl.split(',')[1];
+            const bytes = (base64.length * 3) / 4;
+            if (bytes < 1024) return `${Math.round(bytes)} B`;
+            if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+            return `${Math.round(bytes / (1024 * 1024) * 10) / 10} MB`;
+        } catch (e) {
+            return '';
+        }
+    };
 
+    const downloadFile = (item) => {
+        if (!item.url || !item.url.startsWith('data:')) {
+            // External URL - open in new tab
+            window.open(item.url, '_blank');
+            return;
+        }
+
+        // Base64 data - create download
+        try {
+            const link = document.createElement('a');
+            link.href = item.url;
+            link.download = item.name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (e) {
+            console.error('Download failed:', e);
+            alert('Failed to download file');
+        }
+    };
+
+    // Navigate in tree structure
     const getNodeAtPath = (tree, pathArr) => {
         let node = tree;
         for (const segment of pathArr) {
@@ -58,13 +106,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderBreadcrumb = () => {
-        const parts = ['Home', ...currentPath];
+        const parts = ['Resources', ...currentPath];
         breadcrumb.innerHTML = parts.map((p, idx) => {
             if (idx === 0) {
-                return `<button class="crumb" data-index="0"><i class="fa-solid fa-house"></i> Home</button>`;
+                return `<button class="crumb" data-index="0"><i class="fa-solid fa-house"></i> ${p}</button>`;
             }
             return `<button class="crumb" data-index="${idx}">${p}</button>`;
-        }).join('<span class="crumb-sep">/</span>');
+        }).join('<span class="crumb-sep"> / </span>');
 
         breadcrumb.querySelectorAll('.crumb').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -79,18 +127,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const node = getNodeAtPath(fullTree, currentPath);
         const term = (searchInput.value || '').toLowerCase();
         let items = (node.children || []).filter(ch => ch.name.toLowerCase().includes(term));
-        // filters (only apply to files)
-        const subj = (filterSubject && filterSubject.value) || '';
-        const sem = (filterSemester && filterSemester.value) || '';
+
+        // Apply filters
         const ftype = (filterType && filterType.value) || '';
         items = items.filter(ch => {
             if (ch.type === 'folder') return true;
-            if (subj && (!ch.tags || ch.tags.subject !== subj)) return false;
-            if (sem && (!ch.tags || ch.tags.semester !== sem)) return false;
             if (ftype) {
-                const icon = detectIcon(ch.url, ch.name);
-                const map = { 'PDF':'fa-file-pdf', 'Doc':'fa-file-word', 'Sheet':'fa-file-excel', 'Slide':'fa-file-powerpoint', 'Video':'fa-file-video', 'Link':'fa-up-right-from-square' };
-                if (map[ftype] !== icon) return false;
+                const ext = (ch.name.split('.').pop() || '').toUpperCase();
+                if (ftype.toUpperCase() !== ext) return false;
             }
             return true;
         });
@@ -100,17 +144,17 @@ document.addEventListener('DOMContentLoaded', () => {
         explorer.innerHTML = '';
 
         if (items.length === 0) {
-            explorer.innerHTML = `<div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No items here.</p></div>`;
+            explorer.innerHTML = `<div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No items found.</p></div>`;
             return;
         }
 
-        // Folders first, then files
+        // Sort: folders first, then files alphabetically
         items.sort((a, b) => {
             if (a.type === b.type) return a.name.localeCompare(b.name);
             return a.type === 'folder' ? -1 : 1;
         });
 
-        items.forEach((item, idx) => {
+        items.forEach((item) => {
             if (item.type === 'folder') {
                 const el = document.createElement('button');
                 el.className = 'resource-item folder';
@@ -119,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="icon"><i class="fa-solid ${ICONS.folder}"></i></div>
                     <div class="meta">
                         <div class="name">${item.name}</div>
-                        <div class="sub">Folder</div>
+                        <div class="sub">Folder • ${(item.children || []).length} items</div>
                     </div>
                 `;
                 el.addEventListener('click', () => {
@@ -128,24 +172,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 explorer.appendChild(el);
             } else {
-                const icon = detectIcon(item.url, item.name);
-                const a = document.createElement('a');
-                a.className = 'resource-item file';
-                a.setAttribute('role', 'listitem');
-                a.href = item.url;
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                const subj = item.tags?.subject ? `<span class="badge" style="margin-left:6px;">${item.tags.subject}</span>` : '';
-                const sem = item.tags?.semester ? `<span class="badge" style="margin-left:6px;">${item.tags.semester}</span>` : '';
-        const ext = (item.name.split('.').pop() || '').toUpperCase();
-                a.innerHTML = `
+                const icon = detectIcon(item.name, item.url);
+                const ext = (item.name.split('.').pop() || '').toUpperCase();
+                const size = getFileSize(item.url);
+                
+                const el = document.createElement('div');
+                el.className = 'resource-item file';
+                el.setAttribute('role', 'listitem');
+                
+                el.innerHTML = `
                     <div class="icon"><i class="fa-solid ${icon}"></i></div>
                     <div class="meta">
                         <div class="name">${item.name}</div>
-            <div class="sub">File <span class="badge" data-kind="ext-${ext}" style="margin-left:6px;">${ext}</span>${subj}${sem}</div>
+                        <div class="sub">
+                            ${ext} File
+                            ${size ? ` • ${size}` : ''}
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="download-btn" title="Download">
+                            <i class="fa-solid fa-download"></i>
+                        </button>
                     </div>
                 `;
-                explorer.appendChild(a);
+
+                // Add download functionality
+                const downloadBtn = el.querySelector('.download-btn');
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    downloadFile(item);
+                });
+
+                // Make whole item clickable for download
+                el.addEventListener('click', () => {
+                    downloadFile(item);
+                });
+
+                explorer.appendChild(el);
             }
         });
     };
@@ -155,57 +218,91 @@ document.addEventListener('DOMContentLoaded', () => {
         renderExplorer();
     };
 
-    // View toggle
+    // View toggle handlers
     const updateViewButtons = () => {
-        viewGridBtn.setAttribute('aria-pressed', (viewMode === 'grid').toString());
-        viewListBtn.setAttribute('aria-pressed', (viewMode === 'list').toString());
+        if (viewGridBtn) viewGridBtn.setAttribute('aria-pressed', (viewMode === 'grid').toString());
+        if (viewListBtn) viewListBtn.setAttribute('aria-pressed', (viewMode === 'list').toString());
     };
-    viewGridBtn.addEventListener('click', () => {
-        viewMode = 'grid';
-        localStorage.setItem('resourceView', viewMode);
-        updateViewButtons();
-        renderExplorer();
-    });
-    viewListBtn.addEventListener('click', () => {
-        viewMode = 'list';
-        localStorage.setItem('resourceView', viewMode);
-        updateViewButtons();
-        renderExplorer();
-    });
 
-    // Search
-    searchInput.addEventListener('input', () => {
-        renderExplorer();
-    });
+    if (viewGridBtn) {
+        viewGridBtn.addEventListener('click', () => {
+            viewMode = 'grid';
+            localStorage.setItem('resourceView', viewMode);
+            updateViewButtons();
+            renderExplorer();
+        });
+    }
 
-    // Load data and bootstrap
+    if (viewListBtn) {
+        viewListBtn.addEventListener('click', () => {
+            viewMode = 'list';
+            localStorage.setItem('resourceView', viewMode);
+            updateViewButtons();
+            renderExplorer();
+        });
+    }
+
+    // Search handler
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            renderExplorer();
+        });
+    }
+
+    // Load resources data
     window.API.get(window.CONFIG.ENDPOINTS.RESOURCES, 'resources.json')
         .then(data => {
-            // If already hierarchical (has name/type/children), use as-is; else adapt
+            console.log('Resources data loaded:', data);
+            
             if (data && data.type === 'folder' && Array.isArray(data.children)) {
+                // New hierarchical format
                 fullTree = data;
+            } else if (data && typeof data === 'object') {
+                // Legacy format - convert to hierarchical
+                fullTree = {
+                    name: 'Resources',
+                    type: 'folder',
+                    children: [
+                        { name: 'Notes', type: 'folder', children: (data.notes || []).map(x => ({ name: x.title, type: 'file', url: x.url })) },
+                        { name: 'Slides', type: 'folder', children: (data.slides || []).map(x => ({ name: x.title, type: 'file', url: x.url })) },
+                        { name: 'Recordings', type: 'folder', children: (data.recordings || []).map(x => ({ name: x.title, type: 'file', url: x.url })) },
+                        { name: 'External Links', type: 'folder', children: (data.external_links || []).map(x => ({ name: x.title, type: 'file', url: x.url })) }
+                    ]
+                };
             } else {
-                fullTree = buildTreeFromLegacy(data || {});
+                // Empty state
+                fullTree = {
+                    name: 'Resources',
+                    type: 'folder',
+                    children: []
+                };
             }
-            // Initialize UI state
+
+            // Initialize UI
             updateViewButtons();
-        // populate filters from tree (collect distinct)
-        const allFiles = [];
-        const walk = (n) => { if (n.type === 'file') allFiles.push(n); (n.children||[]).forEach(walk); };
-        walk(fullTree);
-        const subjects = [...new Set(allFiles.map(f => f.tags?.subject).filter(Boolean))].sort();
-        const semesters = [...new Set(allFiles.map(f => f.tags?.semester).filter(Boolean))].sort();
-        if (filterSubject) filterSubject.innerHTML = ['<option value="">All Subjects</option>', ...subjects.map(s => `<option>${s}</option>`)].join('');
-        if (filterSemester) filterSemester.innerHTML = ['<option value="">All Semesters</option>', ...semesters.map(s => `<option>${s}</option>`)].join('');
-        render();
+            
+            // Populate file type filter
+            if (filterType) {
+                const allFiles = [];
+                const walk = (node) => {
+                    if (node.type === 'file') allFiles.push(node);
+                    (node.children || []).forEach(walk);
+                };
+                walk(fullTree);
+                
+                const extensions = [...new Set(allFiles.map(f => (f.name.split('.').pop() || '').toUpperCase()).filter(Boolean))].sort();
+                filterType.innerHTML = ['<option value="">All Types</option>', ...extensions.map(ext => `<option value="${ext}">${ext}</option>`)].join('');
+            }
+
+            render();
         })
         .catch(err => {
             console.error('Failed to load resources:', err);
-            explorer.innerHTML = `<div class="empty-state"><i class=\"fa-solid fa-triangle-exclamation\"></i><p>Could not load resources.</p></div>`;
+            explorer.innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Could not load resources. Please try again later.</p></div>`;
         });
 
-    // filters change handlers
+    // Filter change handlers
+    if (filterType) filterType.addEventListener('change', renderExplorer);
     if (filterSubject) filterSubject.addEventListener('change', renderExplorer);
     if (filterSemester) filterSemester.addEventListener('change', renderExplorer);
-    if (filterType) filterType.addEventListener('change', renderExplorer);
 });

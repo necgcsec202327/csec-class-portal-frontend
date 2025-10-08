@@ -215,42 +215,103 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderResources() {
-        // Toolbar + breadcrumb + controls
+        // Clean admin interface with better organization
+        const node = getNodeAtPath(resourceTree, currentResourcePath);
+        const items = [...(node.children || [])].sort((a,b) => (a.type===b.type? a.name.localeCompare(b.name) : (a.type==='folder'?-1:1)));
+        
+        // Count stats
+        const folderCount = items.filter(i => i.type === 'folder').length;
+        const fileCount = items.filter(i => i.type === 'file').length;
+        const selectedCount = selection.size;
+        
         resourcesEditor.innerHTML = `
-            <div class="resource-toolbar">
-                <div class="left-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button id="res-new-folder" class="button-secondary"><i class="fa-solid fa-folder-plus"></i> New Folder</button>
+            <!-- Header with title and stats -->
+            <div class="admin-resources-header">
+                <div class="admin-resources-title">
+                    <i class="fa-solid fa-folder-tree"></i>
+                    <span>Resource Management</span>
+                </div>
+                <div class="admin-resources-stats">
+                    <div class="stat-item">
+                        <i class="fa-solid fa-folder"></i>
+                        <span>${folderCount} folders</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fa-solid fa-file"></i>
+                        <span>${fileCount} files</span>
+                    </div>
+                    ${selectedCount > 0 ? `<div class="stat-item" style="color: var(--primary-color); font-weight: 500;">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>${selectedCount} selected</span>
+                    </div>` : ''}
+                </div>
+            </div>
+
+            <!-- Toolbar with actions -->
+            <div class="admin-resources-toolbar">
+                <div class="admin-toolbar-left">
+                    <button id="res-new-folder" class="button-secondary">
+                        <i class="fa-solid fa-folder-plus"></i> New Folder
+                    </button>
                     <label class="button-secondary" style="cursor:pointer;">
                         <input type="file" id="res-upload" style="display:none;" multiple>
                         <i class="fa-solid fa-upload"></i> Upload Files
                     </label>
-                    <button id="res-new-link" class="button-secondary"><i class="fa-solid fa-link"></i> New Link</button>
-                    <span style="width:1px; height:28px; background:var(--border-color);"></span>
-                    <label style="display:flex; align-items:center; gap:6px;">
-                        <input type="checkbox" id="res-select-all" /> Select all
+                    <button id="res-new-link" class="button-secondary">
+                        <i class="fa-solid fa-link"></i> Add Link
+                    </button>
+                    
+                    <div class="admin-toolbar-separator"></div>
+                    
+                    <label style="display:flex; align-items:center; gap:6px; font-size: 0.875rem;">
+                        <input type="checkbox" id="res-select-all" class="admin-resource-checkbox" /> 
+                        Select all
                     </label>
-                    <button id="res-bulk-move" class="button-secondary" disabled><i class="fa-solid fa-folder-open"></i> Move Selected</button>
-                    <button id="res-bulk-delete" class="button-danger" disabled><i class="fa-solid fa-trash"></i> Delete Selected</button>
                 </div>
-                <div class="view-toggle">
-                    <button id="res-view-grid" class="button-secondary" aria-pressed="${viewModeResources==='grid'}"><i class="fa-solid fa-border-all"></i></button>
-                    <button id="res-view-list" class="button-secondary" aria-pressed="${viewModeResources==='list'}"><i class="fa-solid fa-list"></i></button>
+                
+                <div class="admin-toolbar-right">
+                    <div class="admin-bulk-actions ${selectedCount === 0 ? 'hidden' : ''}">
+                        <span>${selectedCount} selected</span>
+                        <button id="res-bulk-move" class="button-secondary" style="margin-left: 8px;">
+                            <i class="fa-solid fa-arrows-alt"></i> Move
+                        </button>
+                        <button id="res-bulk-delete" class="button-danger">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
+                    
+                    <div class="view-toggle">
+                        <button id="res-view-list" class="button-secondary" title="List view" aria-pressed="${viewModeResources==='list'}">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                        <button id="res-view-grid" class="button-secondary" title="Grid view" aria-pressed="${viewModeResources==='grid'}">
+                            <i class="fa-solid fa-border-all"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div id="res-breadcrumb" class="breadcrumb" aria-label="Folder breadcrumb"></div>
-            <div id="res-dropzone" class="card" style="padding:0;">
-                <div id="res-list" class="${viewModeResources==='grid' ? 'resource-grid' : 'resource-list'}" style="padding:16px;" tabindex="0" role="list"></div>
+
+            <!-- Content area -->
+            <div class="admin-resources-content">
+                <div id="res-breadcrumb" class="admin-resources-breadcrumb" aria-label="Folder breadcrumb"></div>
+                <div id="res-dropzone" class="admin-resources-list" tabindex="0" role="list">
+                    <div id="res-list"></div>
+                </div>
             </div>
-            <p style="margin-top:8px; color: var(--text-color-soft); font-size: 0.9rem;">Tip: Drag files here from your computer to upload. Drag items onto folders to move.</p>
+            
+            <div style="margin-top:12px; padding:12px; background: var(--bg-color); border-radius: 8px; color: var(--text-color-soft); font-size: 0.875rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-info-circle"></i>
+                <span>Drag files here to upload, or drag items onto folders to move them. Double-click folders to navigate.</span>
+            </div>
 
             <!-- Move dialog -->
             <div id="move-modal" class="modal" aria-hidden="true" aria-labelledby="move-modal-title" role="dialog">
                 <div class="modal-content" role="document">
-                    <h2 id="move-modal-title">Move to</h2>
-                    <label for="move-target">Select destination folder</label>
-                    <select id="move-target" style="width:100%; margin-top:8px;"></select>
+                    <h2 id="move-modal-title">Move Selected Items</h2>
+                    <label for="move-target">Choose destination folder:</label>
+                    <select id="move-target" style="width:100%; margin-top:8px; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);"></select>
                     <div class="modal-actions">
-                        <button id="move-confirm" class="button-primary">Move</button>
+                        <button id="move-confirm" class="button-primary">Move Items</button>
                         <button id="move-cancel" class="button-secondary">Cancel</button>
                     </div>
                 </div>
@@ -275,81 +336,195 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Current items
-        const node = getNodeAtPath(resourceTree, currentResourcePath);
-        const items = [...(node.children || [])].sort((a,b) => (a.type===b.type? a.name.localeCompare(b.name) : (a.type==='folder'?-1:1)));
-
+        // Render items with new clean design
         if (items.length === 0) {
-            listEl.innerHTML = `<div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No items here.</p></div>`;
+            listEl.innerHTML = `
+                <div class="admin-empty-state">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <h3>No items here</h3>
+                    <p>This folder is empty. Upload files or create new folders to get started.</p>
+                </div>
+            `;
         } else {
             listEl.innerHTML = '';
             items.forEach((item, idx) => {
+                const el = document.createElement('div');
+                el.className = `admin-resource-item ${item.type} ${selection.has(item.id) ? 'selected' : ''}`;
+                el.setAttribute('draggable', 'true');
+                el.setAttribute('role', 'listitem');
+                el.setAttribute('tabindex', idx === 0 ? '0' : '-1');
+                el.dataset.id = item.id;
+                
                 if (item.type === 'folder') {
-                    const el = document.createElement('div');
-                    el.className = 'resource-item folder';
-                    el.setAttribute('draggable', 'true');
-                    el.setAttribute('role', 'listitem');
-                    el.setAttribute('tabindex', idx === 0 ? '0' : '-1');
-                    el.dataset.id = item.id;
                     el.innerHTML = `
-                        <input type="checkbox" class="res-select" aria-label="Select ${item.name}" ${selection.has(item.id)?'checked':''} />
-                        <div class="icon"><i class="fa-solid fa-folder"></i></div>
-                        <div class="meta">
-                            <div class="name" contenteditable="false">${item.name}</div>
-                            <div class="sub">Folder</div>
+                        <input type="checkbox" class="admin-resource-checkbox res-select" 
+                               aria-label="Select ${item.name}" ${selection.has(item.id)?'checked':''} />
+                        <div class="admin-resource-icon">
+                            <i class="fa-solid fa-folder" style="color: #3b82f6;"></i>
                         </div>
-                        <div class="actions" style="margin-left:auto; display:flex; gap:6px;">
-                            <button class="button-secondary res-rename" title="Rename"><i class="fa-solid fa-pen"></i></button>
-                            <button class="button-secondary res-delete" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        <div class="admin-resource-meta">
+                            <div class="admin-resource-name name" contenteditable="false">${item.name}</div>
+                            <div class="admin-resource-details">
+                                <span>Folder</span>
+                                <span>•</span>
+                                <span>${(item.children || []).length} items</span>
+                            </div>
+                        </div>
+                        <div class="admin-resource-actions">
+                            <button class="admin-action-btn res-rename" title="Rename">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="admin-action-btn danger res-delete" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </div>
                     `;
-                    el.addEventListener('dblclick', () => { currentResourcePath = [...currentResourcePath, item.name]; renderResources(); });
-                    el.querySelector('.res-select').addEventListener('click', (ev) => { ev.stopPropagation(); toggleSelect(item.id, ev.currentTarget.checked); });
-                    // drag
-                    el.addEventListener('dragstart', (ev) => { ev.dataTransfer.setData('text/plain', item.id); ev.dataTransfer.effectAllowed = 'move'; });
-                    el.addEventListener('dragover', (ev) => { ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; });
+                    el.addEventListener('dblclick', () => { 
+                        currentResourcePath = [...currentResourcePath, item.name]; 
+                        renderResources(); 
+                    });
+                } else {
+                    const ext = (item.name.split('.').pop() || '').toUpperCase();
+                    const fileIcon = getFileIcon(item.name);
+                    const fileSize = item.url && item.url.startsWith('data:') ? 
+                        formatFileSize(Math.round(item.url.length * 0.75)) : '';
+                    
+                    el.innerHTML = `
+                        <input type="checkbox" class="admin-resource-checkbox res-select" 
+                               aria-label="Select ${item.name}" ${selection.has(item.id)?'checked':''} />
+                        <div class="admin-resource-icon">
+                            <i class="${fileIcon}" style="color: ${getFileColor(ext)};"></i>
+                        </div>
+                        <div class="admin-resource-meta">
+                            <div class="admin-resource-name name" contenteditable="false">${item.name}</div>
+                            <div class="admin-resource-details">
+                                <span class="admin-resource-tag">${ext || 'FILE'}</span>
+                                ${item.tags?.subject ? `<span class="admin-resource-tag">📚 ${item.tags.subject}</span>` : ''}
+                                ${item.tags?.semester ? `<span class="admin-resource-tag">📅 ${item.tags.semester}</span>` : ''}
+                                ${fileSize ? `<span>${fileSize}</span>` : ''}
+                            </div>
+                            <div class="admin-tag-editor" style="display: none;">
+                                <input class="admin-tag-input tag-subject" type="text" 
+                                       placeholder="Subject" value="${item.tags?.subject || ''}" />
+                                <input class="admin-tag-input tag-semester" type="text" 
+                                       placeholder="Semester" value="${item.tags?.semester || ''}" />
+                            </div>
+                        </div>
+                        <div class="admin-resource-actions">
+                            <a class="admin-action-btn" href="${item.url}" target="_blank" 
+                               rel="noopener" title="Open file">
+                                <i class="fa-solid fa-external-link-alt"></i>
+                            </a>
+                            <button class="admin-action-btn res-edit-tags" title="Edit tags">
+                                <i class="fa-solid fa-tags"></i>
+                            </button>
+                            <button class="admin-action-btn res-rename" title="Rename">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="admin-action-btn danger res-delete" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Tag editing functionality
+                    const tagEditor = el.querySelector('.admin-tag-editor');
+                    const editTagsBtn = el.querySelector('.res-edit-tags');
+                    const subjectInput = el.querySelector('.tag-subject');
+                    const semesterInput = el.querySelector('.tag-semester');
+                    
+                    editTagsBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const isVisible = tagEditor.style.display !== 'none';
+                        tagEditor.style.display = isVisible ? 'none' : 'flex';
+                        if (!isVisible) subjectInput.focus();
+                    });
+                    
+                    [subjectInput, semesterInput].forEach(input => {
+                        input.addEventListener('change', (ev) => {
+                            item.tags = item.tags || {};
+                            const field = input.classList.contains('tag-subject') ? 'subject' : 'semester';
+                            item.tags[field] = ev.target.value.trim();
+                            renderResources(); // Refresh to show updated tags
+                        });
+                        input.addEventListener('keydown', (ev) => {
+                            if (ev.key === 'Enter') {
+                                ev.preventDefault();
+                                tagEditor.style.display = 'none';
+                            }
+                        });
+                    });
+                }
+                
+                // Common event handlers
+                el.querySelector('.res-select').addEventListener('click', (ev) => { 
+                    ev.stopPropagation(); 
+                    toggleSelect(item.id, ev.currentTarget.checked);
+                    renderResources(); // Refresh to update selection state
+                });
+                
+                // Drag and drop
+                el.addEventListener('dragstart', (ev) => { 
+                    ev.dataTransfer.setData('text/plain', item.id); 
+                    ev.dataTransfer.effectAllowed = 'move'; 
+                });
+                
+                if (item.type === 'folder') {
+                    el.addEventListener('dragover', (ev) => { 
+                        ev.preventDefault(); 
+                        ev.dataTransfer.dropEffect = 'move'; 
+                        el.style.background = 'rgba(59, 130, 246, 0.2)';
+                    });
+                    el.addEventListener('dragleave', () => {
+                        el.style.background = '';
+                    });
                     el.addEventListener('drop', (ev) => {
                         ev.preventDefault();
+                        el.style.background = '';
                         const dragId = ev.dataTransfer.getData('text/plain');
                         moveItemIntoFolder(dragId, item.id);
                     });
-                    listEl.appendChild(el);
-                } else {
-                    const el = document.createElement('div');
-                    el.className = 'resource-item file';
-                    el.setAttribute('draggable', 'true');
-                    el.setAttribute('role', 'listitem');
-                    el.setAttribute('tabindex', idx === 0 ? '0' : '-1');
-                    el.dataset.id = item.id;
-                    const ext = (item.name.split('.').pop() || '').toUpperCase();
-                    el.innerHTML = `
-                        <input type="checkbox" class="res-select" aria-label="Select ${item.name}" ${selection.has(item.id)?'checked':''} />
-                        <div class="icon"><i class="fa-solid fa-file"></i></div>
-                        <div class="meta">
-                            <div class="name" contenteditable="false">${item.name}</div>
-                            <div class="sub">File <span class="badge" style="margin-left:6px;">${ext}</span>
-                                <span class="badge" style="margin-left:6px;">${item.tags?.subject || 'Subject'}</span>
-                                <span class="badge" style="margin-left:6px;">${item.tags?.semester || 'Semester'}</span>
-                            </div>
-                        </div>
-                        <div class="actions" style="margin-left:auto; display:flex; gap:6px;">
-                            <a class="button-secondary" href="${item.url}" target="_blank" rel="noopener" title="Open"><i class="fa-solid fa-up-right-from-square"></i></a>
-                            <button class="button-secondary res-rename" title="Rename"><i class="fa-solid fa-pen"></i></button>
-                            <button class="button-secondary res-delete" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                        <div class="tags" style="display:flex; gap:6px; width:100%; margin-top:8px;">
-                            <input class="tag-subject" type="text" placeholder="Subject" value="${item.tags?.subject || ''}" style="flex:1; padding:6px 8px; border:1px solid var(--border-color); border-radius:6px; background:var(--card-bg); color:var(--text-color);" />
-                            <input class="tag-semester" type="text" placeholder="Semester" value="${item.tags?.semester || ''}" style="flex:1; padding:6px 8px; border:1px solid var(--border-color); border-radius:6px; background:var(--card-bg); color:var(--text-color);" />
-                        </div>
-                    `;
-                    el.querySelector('.res-select').addEventListener('click', (ev) => { ev.stopPropagation(); toggleSelect(item.id, ev.currentTarget.checked); });
-                    el.addEventListener('dragstart', (ev) => { ev.dataTransfer.setData('text/plain', item.id); ev.dataTransfer.effectAllowed = 'move'; });
-                    // tag edits
-                    el.querySelector('.tag-subject').addEventListener('change', (ev) => { item.tags = item.tags || {}; item.tags.subject = ev.target.value.trim(); });
-                    el.querySelector('.tag-semester').addEventListener('change', (ev) => { item.tags = item.tags || {}; item.tags.semester = ev.target.value.trim(); });
-                    listEl.appendChild(el);
                 }
+                
+                listEl.appendChild(el);
             });
+        }
+        
+        // Helper functions for file icons and colors
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop()?.toLowerCase() || '';
+            const iconMap = {
+                'pdf': 'fa-solid fa-file-pdf',
+                'doc': 'fa-solid fa-file-word', 'docx': 'fa-solid fa-file-word',
+                'xls': 'fa-solid fa-file-excel', 'xlsx': 'fa-solid fa-file-excel',
+                'ppt': 'fa-solid fa-file-powerpoint', 'pptx': 'fa-solid fa-file-powerpoint',
+                'jpg': 'fa-solid fa-file-image', 'jpeg': 'fa-solid fa-file-image', 
+                'png': 'fa-solid fa-file-image', 'gif': 'fa-solid fa-file-image',
+                'mp4': 'fa-solid fa-file-video', 'avi': 'fa-solid fa-file-video',
+                'zip': 'fa-solid fa-file-zipper', 'rar': 'fa-solid fa-file-zipper',
+                'txt': 'fa-solid fa-file-lines', 'md': 'fa-solid fa-file-lines'
+            };
+            return iconMap[ext] || 'fa-solid fa-file';
+        }
+        
+        function getFileColor(ext) {
+            const colorMap = {
+                'PDF': '#dc2626', 'DOC': '#2563eb', 'DOCX': '#2563eb',
+                'XLS': '#059669', 'XLSX': '#059669',
+                'PPT': '#ea580c', 'PPTX': '#ea580c',
+                'JPG': '#7c3aed', 'JPEG': '#7c3aed', 'PNG': '#7c3aed', 'GIF': '#7c3aed',
+                'MP4': '#db2777', 'AVI': '#db2777',
+                'ZIP': '#6b7280', 'RAR': '#6b7280',
+                'TXT': '#374151', 'MD': '#374151'
+            };
+            return colorMap[ext] || '#6b7280';
+        }
+        
+        function formatFileSize(bytes) {
+            if (!bytes) return '';
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
         }
 
         // Drop files into current folder
@@ -391,66 +566,138 @@ document.addEventListener('DOMContentLoaded', () => {
             renderResources();
         });
 
-        // Item actions (rename/delete)
+        // Enhanced item actions with better UX
         listEl.addEventListener('click', (e) => {
-            const row = e.target.closest('.resource-item');
+            const row = e.target.closest('.admin-resource-item');
             if (!row) return;
             const id = row.dataset.id;
+            
             if (e.target.closest('.res-rename')) {
+                e.stopPropagation();
                 const { node } = findNodeById(resourceTree, id) || {};
                 if (!node) return;
-                // Toggle inline rename
-                const nameEl = row.querySelector('.name');
+                
+                // Toggle inline rename with better styling
+                const nameEl = row.querySelector('.admin-resource-name');
+                const originalName = node.name;
+                
                 nameEl.setAttribute('contenteditable', 'true');
+                nameEl.style.background = 'var(--card-bg)';
+                nameEl.style.border = '2px solid var(--primary-color)';
+                nameEl.style.borderRadius = '4px';
+                nameEl.style.padding = '4px 8px';
                 nameEl.focus();
+                
+                // Select all text for easy editing
+                const range = document.createRange();
+                range.selectNodeContents(nameEl);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                
                 const commit = () => {
                     nameEl.setAttribute('contenteditable', 'false');
+                    nameEl.style.background = '';
+                    nameEl.style.border = '';
+                    nameEl.style.borderRadius = '';
+                    nameEl.style.padding = '';
+                    
                     const newName = nameEl.textContent.trim();
-                    if (!newName || newName === node.name) { nameEl.textContent = node.name; return; }
+                    if (!newName || newName === originalName) { 
+                        nameEl.textContent = originalName; 
+                        return; 
+                    }
+                    
                     const parent = findNodeById(resourceTree, id).parent;
                     const unique = ensureUniqueName(newName, (parent?.children || []).filter(n => n.id !== id));
                     node.name = unique;
                     renderResources();
                 };
+                
+                const cancel = () => {
+                    nameEl.setAttribute('contenteditable', 'false');
+                    nameEl.style.background = '';
+                    nameEl.style.border = '';
+                    nameEl.style.borderRadius = '';
+                    nameEl.style.padding = '';
+                    nameEl.textContent = originalName;
+                };
+                
                 nameEl.addEventListener('blur', commit, { once: true });
-                nameEl.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); commit(); } });
+                nameEl.addEventListener('keydown', (ev) => { 
+                    if (ev.key === 'Enter') { 
+                        ev.preventDefault(); 
+                        commit(); 
+                    } else if (ev.key === 'Escape') {
+                        ev.preventDefault();
+                        cancel();
+                    }
+                });
             }
+            
             if (e.target.closest('.res-delete')) {
-                showConfirmationModal(() => {
+                e.stopPropagation();
+                const { node } = findNodeById(resourceTree, id) || {};
+                if (!node) return;
+                
+                const itemType = node.type === 'folder' ? 'folder' : 'file';
+                const itemCount = node.type === 'folder' && node.children ? ` (${node.children.length} items)` : '';
+                const message = `Are you sure you want to delete this ${itemType} "${node.name}"${itemCount}?`;
+                
+                if (confirm(message)) {
                     const found = findNodeById(resourceTree, id);
                     if (!found || !found.parent) return;
                     found.parent.children = found.parent.children.filter(ch => ch.id !== id);
                     renderResources();
-                });
+                }
             }
         });
 
-        // Select all + bulk buttons state
+        // Enhanced bulk actions with better UX
         const selectAll = resourcesEditor.querySelector('#res-select-all');
         const bulkMoveBtn = resourcesEditor.querySelector('#res-bulk-move');
         const bulkDeleteBtn = resourcesEditor.querySelector('#res-bulk-delete');
+        const bulkActions = resourcesEditor.querySelector('.admin-bulk-actions');
 
         const refreshBulkState = () => {
             const hasSel = selection.size > 0;
-            bulkMoveBtn.disabled = !hasSel;
-            bulkDeleteBtn.disabled = !hasSel;
-            // set selectAll based on current folder items
-            const node = getNodeAtPath(resourceTree, currentResourcePath);
-            const ids = new Set((node.children||[]).map(n => n.id));
-            const allChecked = (node.children||[]).length > 0 && [...ids].every(id => selection.has(id));
+            
+            // Update bulk actions visibility
+            if (hasSel) {
+                bulkActions.classList.remove('hidden');
+                bulkActions.querySelector('span').textContent = `${selection.size} selected`;
+            } else {
+                bulkActions.classList.add('hidden');
+            }
+            
+            // Update select all checkbox
+            const currentNode = getNodeAtPath(resourceTree, currentResourcePath);
+            const currentIds = new Set((currentNode.children||[]).map(n => n.id));
+            const allChecked = (currentNode.children||[]).length > 0 && [...currentIds].every(id => selection.has(id));
+            const someChecked = [...currentIds].some(id => selection.has(id));
+            
             selectAll.checked = allChecked;
+            selectAll.indeterminate = someChecked && !allChecked;
         };
         refreshBulkState();
 
         selectAll.addEventListener('change', (e) => {
-            const node = getNodeAtPath(resourceTree, currentResourcePath);
-            (node.children || []).forEach(n => { if (e.target.checked) selection.add(n.id); else selection.delete(n.id); });
+            const currentNode = getNodeAtPath(resourceTree, currentResourcePath);
+            (currentNode.children || []).forEach(n => { 
+                if (e.target.checked) selection.add(n.id); 
+                else selection.delete(n.id); 
+            });
             renderResources();
         });
 
         bulkDeleteBtn.addEventListener('click', () => {
             if (selection.size === 0) return;
-            showConfirmationModal(() => {
+            const count = selection.size;
+            const message = count === 1 ? 
+                'Are you sure you want to delete this item?' : 
+                `Are you sure you want to delete these ${count} items?`;
+            
+            if (confirm(message)) {
                 // remove selected from their parents
                 const toRemove = new Set(selection);
                 const removeRec = (node) => {
@@ -462,7 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 removeRec(resourceTree);
                 selection.clear();
                 renderResources();
-            });
+            }
         });
 
         bulkMoveBtn.addEventListener('click', () => {
@@ -520,16 +767,41 @@ document.addEventListener('DOMContentLoaded', () => {
         if (on) selection.add(id); else selection.delete(id);
         // do not re-render here; allow caller to manage
     }
-        // View toggle
-        resourcesEditor.querySelector('#res-view-grid').addEventListener('click', () => {
+        // Enhanced view toggle with visual feedback
+        const viewGridBtn = resourcesEditor.querySelector('#res-view-grid');
+        const viewListBtn = resourcesEditor.querySelector('#res-view-list');
+        
+        // Update button states
+        const updateViewButtons = () => {
+            viewGridBtn.setAttribute('aria-pressed', viewModeResources === 'grid');
+            viewListBtn.setAttribute('aria-pressed', viewModeResources === 'list');
+            
+            if (viewModeResources === 'grid') {
+                viewGridBtn.style.background = 'var(--primary-color)';
+                viewGridBtn.style.color = 'white';
+                viewListBtn.style.background = '';
+                viewListBtn.style.color = '';
+                listEl.className = 'resource-grid';
+            } else {
+                viewListBtn.style.background = 'var(--primary-color)';
+                viewListBtn.style.color = 'white';
+                viewGridBtn.style.background = '';
+                viewGridBtn.style.color = '';
+                listEl.className = 'resource-list';
+            }
+        };
+        updateViewButtons();
+        
+        viewGridBtn.addEventListener('click', () => {
             viewModeResources = 'grid';
             localStorage.setItem('adminResourceView', viewModeResources);
-            renderResources();
+            updateViewButtons();
         });
-        resourcesEditor.querySelector('#res-view-list').addEventListener('click', () => {
+        
+        viewListBtn.addEventListener('click', () => {
             viewModeResources = 'list';
             localStorage.setItem('adminResourceView', viewModeResources);
-            renderResources();
+            updateViewButtons();
         });
     }
 
