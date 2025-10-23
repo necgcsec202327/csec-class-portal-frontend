@@ -99,13 +99,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return count;
     }
 
-    // Quick action handlers (including Sync)
+    // Quick action handlers (API-only)
     document.querySelectorAll('.action-card').forEach(card => {
         card.addEventListener('click', async () => {
             const action = card.getAttribute('data-action');
-            if (action === 'sync') {
-                await syncFromLocalJson();
-            } else if (action === 'announcements') {
+            if (action === 'announcements') {
                 const link = document.querySelector('[data-tab="announcements"]');
                 if (link) link.click();
                 const btn = document.getElementById('add-announcement');
@@ -122,69 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    async function syncFromLocalJson() {
-        try {
-            showToast('Sync started…', 'info');
-
-            // Announcements
-            const ann = await fetch('../data/announcements.json').then(r=>r.json());
-            const annResp = await fetch(`${API_BASE_URL}/api/announcements`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
-                },
-                body: JSON.stringify({ items: ann })
-            });
-            if (!annResp.ok) throw new Error('Announcements sync failed');
-
-            // Events
-            const ev = await fetch('../data/events.json').then(r=>r.json());
-            const evResp = await fetch(`${API_BASE_URL}/api/events`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
-                },
-                body: JSON.stringify({ items: ev })
-            });
-            if (!evResp.ok) throw new Error('Events sync failed');
-
-            // Resources
-            const res = await fetch('../data/resources.json').then(r=>r.json());
-            let root = res;
-            if (!(root && root.type === 'folder' && Array.isArray(root.children))) {
-                root = legacyToTree(res || {});
-            }
-            const resResp = await fetch(`${API_BASE_URL}/api/resources`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
-                },
-                body: JSON.stringify(root)
-            });
-            if (!resResp.ok) throw new Error('Resources sync failed');
-
-            // Timetable
-            const tt = await fetch('../data/timetable.json').then(r=>r.json());
-            const ttResp = await fetch(`${API_BASE_URL}/api/timetable`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
-                },
-                body: JSON.stringify({ url: tt.url || '', type: tt.type || 'image' })
-            });
-            if (!ttResp.ok) throw new Error('Timetable sync failed');
-
-            showToast('Sync completed successfully', 'success');
-        } catch (err) {
-            console.error('Sync error:', err);
-            showToast(err.message || 'Sync failed', 'error');
-        }
-    }
-
     // Dashboard stats update
     function updateDashboardStats() {
         const announcementsCount = document.getElementById('announcements-count');
@@ -198,34 +133,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lastUpdated) lastUpdated.textContent = new Date().toLocaleDateString();
     }
 
-    // Load all data (from local JSON just to prefill the editor; saving goes to API)
+    // Load all data from backend APIs (API-only)
     async function loadData() {
         try {
-            // Load announcements
+            // Announcements
             try {
-                const announcementsResponse = await fetch('../data/announcements.json');
-                if (announcementsResponse.ok) {
-                    announcementsData = await announcementsResponse.json();
-                }
-            } catch (e) {
-                console.log('No announcements data found');
-            }
+                const resp = await fetch(`${API_BASE_URL}/api/announcements`);
+                if (resp.ok) announcementsData = await resp.json();
+                else announcementsData = [];
+            } catch { announcementsData = []; }
 
-            // Load events
+            // Events
             try {
-                const eventsResponse = await fetch('../data/events.json');
-                if (eventsResponse.ok) {
-                    eventsData = await eventsResponse.json();
-                }
-            } catch (e) {
-                console.log('No events data found');
-            }
+                const resp = await fetch(`${API_BASE_URL}/api/events`);
+                if (resp.ok) eventsData = await resp.json();
+                else eventsData = [];
+            } catch { eventsData = []; }
 
-            // Load resources
+            // Resources
             try {
-                const resourcesResponse = await fetch('../data/resources.json');
-                if (resourcesResponse.ok) {
-                    const data = await resourcesResponse.json();
+                const resp = await fetch(`${API_BASE_URL}/api/resources`);
+                if (resp.ok) {
+                    const data = await resp.json();
                     if (data && data.type === 'folder' && Array.isArray(data.children)) {
                         resourceTree = addIdsToTree(data);
                     } else {
@@ -234,19 +163,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     resourceTree = { id: uid(), name: 'Resources', type: 'folder', children: [] };
                 }
-            } catch (e) {
-                resourceTree = { id: uid(), name: 'Resources', type: 'folder', children: [] };
-            }
+            } catch { resourceTree = { id: uid(), name: 'Resources', type: 'folder', children: [] }; }
 
-            // Load timetable
+            // Timetable
             try {
-                const timetableResponse = await fetch('../data/timetable.json');
-                if (timetableResponse.ok) {
-                    timetableData = Object.assign({ url: '', type: 'image' }, await timetableResponse.json());
+                const resp = await fetch(`${API_BASE_URL}/api/timetable`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    timetableData = Object.assign({ url: '', type: 'image' }, data || {});
+                } else {
+                    timetableData = { url: '', type: 'image' };
                 }
-            } catch (e) {
-                console.log('No timetable data found');
-            }
+            } catch { timetableData = { url: '', type: 'image' }; }
 
             // Update dashboard and render sections
             updateDashboardStats();
