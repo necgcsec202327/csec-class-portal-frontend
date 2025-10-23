@@ -23,11 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     showSkeletonLoader(allAnnouncementsList, 5);
 
-    fetch('data/announcements.json')
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-        })
+    const useApi = !!(window.CONFIG && window.API);
+    const fetchAnnouncements = () => useApi 
+        ? window.API.get(window.CONFIG.ENDPOINTS.ANNOUNCEMENTS, 'announcements.json')
+        : fetch('data/announcements.json').then(r=>r.json());
+
+    fetchAnnouncements()
         .then(data => {
             allAnnouncements = data;
             if (data.length === 0) {

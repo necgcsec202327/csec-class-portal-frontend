@@ -90,15 +90,16 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = skeletons;
     };
 
-    // Load announcements on the homepage
+    // Load announcements on the homepage (prefer backend, fallback to local JSON)
     const announcementsList = document.getElementById('announcements-list');
     if (announcementsList) {
         showSkeletonLoader(announcementsList, 3);
-        fetch('data/announcements.json')
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
+        const useApi = !!(window.CONFIG && window.API);
+        const fetchAnnouncements = () => useApi 
+            ? window.API.get(window.CONFIG.ENDPOINTS.ANNOUNCEMENTS, 'announcements.json') 
+            : fetch('data/announcements.json').then(r=>r.json());
+
+        fetchAnnouncements()
             .then(data => {
                 announcementsList.innerHTML = '';
                 if (data.length === 0) {

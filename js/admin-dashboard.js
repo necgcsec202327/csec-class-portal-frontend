@@ -98,6 +98,92 @@ document.addEventListener('DOMContentLoaded', () => {
         return count;
     }
 
+    // Quick action handlers (including Sync)
+    document.querySelectorAll('.action-card').forEach(card => {
+        card.addEventListener('click', async () => {
+            const action = card.getAttribute('data-action');
+            if (action === 'sync') {
+                await syncFromLocalJson();
+            } else if (action === 'announcements') {
+                const link = document.querySelector('[data-tab="announcements"]');
+                if (link) link.click();
+                const btn = document.getElementById('add-announcement');
+                if (btn) btn.click();
+            } else if (action === 'events') {
+                const link = document.querySelector('[data-tab="events"]');
+                if (link) link.click();
+                const btn = document.getElementById('add-event');
+                if (btn) btn.click();
+            } else if (action === 'resources') {
+                const link = document.querySelector('[data-tab="resources"]');
+                if (link) link.click();
+            }
+        });
+    });
+
+    async function syncFromLocalJson() {
+        try {
+            showToast('Sync started…', 'info');
+
+            // Announcements
+            const ann = await fetch('../data/announcements.json').then(r=>r.json());
+            const annResp = await fetch(`${API_BASE_URL}/api/announcements`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({ items: ann })
+            });
+            if (!annResp.ok) throw new Error('Announcements sync failed');
+
+            // Events
+            const ev = await fetch('../data/events.json').then(r=>r.json());
+            const evResp = await fetch(`${API_BASE_URL}/api/events`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({ items: ev })
+            });
+            if (!evResp.ok) throw new Error('Events sync failed');
+
+            // Resources
+            const res = await fetch('../data/resources.json').then(r=>r.json());
+            let root = res;
+            if (!(root && root.type === 'folder' && Array.isArray(root.children))) {
+                root = legacyToTree(res || {});
+            }
+            const resResp = await fetch(`${API_BASE_URL}/api/resources`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify(root)
+            });
+            if (!resResp.ok) throw new Error('Resources sync failed');
+
+            // Timetable
+            const tt = await fetch('../data/timetable.json').then(r=>r.json());
+            const ttResp = await fetch(`${API_BASE_URL}/api/timetable`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({ url: tt.url || '', type: tt.type || 'image' })
+            });
+            if (!ttResp.ok) throw new Error('Timetable sync failed');
+
+            showToast('Sync completed successfully', 'success');
+        } catch (err) {
+            console.error('Sync error:', err);
+            showToast(err.message || 'Sync failed', 'error');
+        }
+    }
+
     // Dashboard stats update
     function updateDashboardStats() {
         const announcementsCount = document.getElementById('announcements-count');

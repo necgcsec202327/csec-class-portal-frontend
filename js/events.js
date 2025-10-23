@@ -7,11 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalLink = document.getElementById('event-modal-link');
     const closeButton = modal.querySelector('.close-button');
 
-    fetch('data/events.json')
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-        })
+    const useApi = !!(window.CONFIG && window.API);
+    const fetchEvents = () => useApi 
+        ? window.API.get(window.CONFIG.ENDPOINTS.EVENTS, 'events.json')
+        : fetch('data/events.json').then(r=>r.json());
+
+    fetchEvents()
         .then(data => {
             const events = data.map(event => ({
                 title: event.title,
