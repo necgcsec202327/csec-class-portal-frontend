@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
@@ -33,37 +33,51 @@
         </div>
     </header>
 
+    <!-- Banner container will be inserted here dynamically -->
+    <div id="banner-container"></div>
+
         <main id="main-content" role="main">
         <section id="hero">
             <div class="container">
-                <h2>CSE – C Section Hub</h2>
-                <p>Announcements, events, and study resources—kept current for our section.</p>
+                <h2>Section portal</h2>
+                <p>Your central portal for announcements, events, and study resources. Designed for academic excellence.</p>
+                <div class="hero-cta">
+                    <div class="hero-links">
+                        <a href="updates.html" class="hero-link">View Latest Updates</a>
+                        <a href="resources.html" class="hero-link">Browse Resources</a>
+                    </div>
+                </div>
             </div>
         </section>
 
         <section id="announcements">
             <div class="container">
-                <h2><i class="fa-solid fa-bullhorn"></i> Latest Announcements</h2>
+                <h2>Latest Announcements</h2>
                 <div id="announcements-list" class="card-container"></div>
-                <a href="updates.html" class="view-all-link">View all updates <i class="fa-solid fa-arrow-right"></i></a>
+                <div style="text-align: center; margin-top: 64px;">
+                    <a href="updates.html" class="button-primary">View all updates</a>
+                </div>
             </div>
         </section>
 
         <section id="quick-links">
             <div class="container">
-                <h2><i class="fa-solid fa-link"></i> Quick Actions</h2>
+                <h2>Quick Access</h2>
                 <div class="quick-links-container">
-                    <a href="timetable.html" class="quick-link-card">
-                        <i class="fa-solid fa-table"></i>
-                        <h3>Timetable</h3>
+                    <a href="timetable.html" class="quick-link-card" tabindex="0">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <h3>Class Schedule</h3>
+                        <p>View your daily timetable and upcoming classes</p>
                     </a>
-                    <a href="resources.html" class="quick-link-card">
-                        <i class="fa-solid fa-book-open"></i>
-                        <h3>Resources</h3>
+                    <a href="resources.html" class="quick-link-card" tabindex="0">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <h3>Study Resources</h3>
+                        <p>Access notes, books, and learning materials</p>
                     </a>
-                    <a href="events.html" class="quick-link-card">
-                        <i class="fa-solid fa-calendar-days"></i>
-                        <h3>Events</h3>
+                    <a href="events.html" class="quick-link-card" tabindex="0">
+                        <i class="fa-solid fa-calendar-star"></i>
+                        <h3>Upcoming Events</h3>
+                        <p>Discover workshops and academic activities</p>
                     </a>
                 </div>
             </div>
@@ -87,6 +101,7 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/banner.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

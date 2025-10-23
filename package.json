@@ -1,0 +1,13 @@
+{
+  "name": "class-portal-website",
+  "version": "1.0.0",
+  "description": "A lightweight, modern, and easy-to-update website for students to view class announcements, register for events, and access resources.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx http-server . -p 3000 -o",
+    "start": "npm run dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

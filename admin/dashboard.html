@@ -3,76 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSE – C Section | Announcements, Events, Resources</title>
-    <meta name="description" content="CSE – C Section | Announcements, Events, Resources">
+    <title>Admin Dashboard | CSE – C Section</title>
+    <meta name="description" content="Admin Dashboard for CSE – C Section Portal">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
 </head>
 <body>
+    <a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
     <header>
         <div class="container">
-            <a href="../index.html" class="logo" aria-label="CSE – C Section Home"><h1>CSE – C Section Portal</h1></a>
+            <a href="../index.html" class="logo" aria-label="CSE – C Section Home"><h1>CSE – C Admin</h1></a>
             <nav aria-label="Primary">
                 <ul class="nav-links" id="primary-nav">
                     <li><a href="../index.html">Home</a></li>
+                    <li><a href="../updates.html">Updates</a></li>
+                    <li><a href="../events.html">Events</a></li>
+                    <li><a href="../resources.html">Resources</a></li>
+                    <li><a href="../about.html">About</a></li>
                 </ul>
             </nav>
             <div class="header-right">
+                <button id="admin-mobile-toggle" class="button-secondary admin-mobile-only" aria-label="Toggle admin sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <button id="theme-toggle" aria-label="Toggle theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
-                <button id="logout-button" class="button-secondary">Logout <i class="fa-solid fa-right-from-bracket"></i></button>
+                <button id="logout-button" class="button-secondary">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Admin
+                </button>
                 <button class="hamburger" aria-label="Toggle navigation" aria-controls="primary-nav" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
             </div>
         </div>
     </header>
-    <main>
-        <div class="container">
-            <div class="admin-dashboard">
-                <div class="admin-header">
-                    <h2 class="page-title"><i class="fa-solid fa-gauge-high"></i> Admin Dashboard</h2>
-                    <div id="floating-save-bar">
-                        <button id="save-announcements" class="button-primary"><i class="fa-solid fa-save"></i> Save Announcements</button>
-                        <button id="save-events" class="button-primary"><i class="fa-solid fa-save"></i> Save Events</button>
-                        <button id="save-resources" class="button-primary"><i class="fa-solid fa-save"></i> Save Resources</button>
-                        <button id="save-timetable" class="button-primary" style="display:none;"><i class="fa-solid fa-save"></i> Save Timetable</button>
+
+    <main id="main-content" role="main">
+        <section id="admin-dashboard">
+            <div class="container">
+                <div class="admin-sidebar-overlay" id="sidebar-overlay"></div>
+                <div class="admin-layout">
+        <aside class="admin-sidebar" id="admin-sidebar">
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a href="#dashboard" class="nav-link active" data-tab="dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        Dashboard
+                    </a></li>
+                    <li><a href="#announcements" class="nav-link" data-tab="announcements">
+                        <i class="fa-solid fa-bullhorn"></i>
+                        Announcements
+                    </a></li>
+                    <li><a href="#events" class="nav-link" data-tab="events">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        Events
+                    </a></li>
+                    <li><a href="#banners" class="nav-link" data-tab="banners">
+                        <i class="fa-solid fa-rectangle-ad"></i>
+                        Banners
+                    </a></li>
+                    <li><a href="#resources" class="nav-link" data-tab="resources">
+                        <i class="fa-solid fa-folder-open"></i>
+                        Resources
+                    </a></li>
+                    <li><a href="#timetable" class="nav-link" data-tab="timetable">
+                        <i class="fa-solid fa-table"></i>
+                        Timetable
+                    </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="admin-main" id="main-content">
+            <!-- Dashboard Overview -->
+            <div id="dashboard" class="tab-content active">
+                <div class="page-header">
+                    <h1>Dashboard Overview</h1>
+                    <p>Manage your CSE – C Section content and monitor activity</p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h3 class="dashboard-card-title">Announcements</h3>
+                            <div class="dashboard-card-icon">
+                                <i class="fa-solid fa-bullhorn"></i>
+                            </div>
+                        </div>
+                        <div class="dashboard-stat" id="announcements-count">0</div>
+                        <p class="dashboard-label">Total announcements</p>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h3 class="dashboard-card-title">Events</h3>
+                            <div class="dashboard-card-icon">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                        </div>
+                        <div class="dashboard-stat" id="events-count">0</div>
+                        <p class="dashboard-label">Upcoming events</p>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h3 class="dashboard-card-title">Resources</h3>
+                            <div class="dashboard-card-icon">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </div>
+                        </div>
+                        <div class="dashboard-stat" id="resources-count">0</div>
+                        <p class="dashboard-label">Available resources</p>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h3 class="dashboard-card-title">Last Updated</h3>
+                            <div class="dashboard-card-icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="dashboard-stat" style="font-size: 18px;" id="last-updated">Today</div>
+                        <p class="dashboard-label">Content last modified</p>
                     </div>
                 </div>
 
-                <div class="tabs">
-                    <button class="tab-link active" data-tab="announcements"><i class="fa-solid fa-bullhorn"></i> Announcements</button>
-                    <button class="tab-link" data-tab="events"><i class="fa-solid fa-calendar-days"></i> Events</button>
-                    <button class="tab-link" data-tab="resources"><i class="fa-solid fa-book"></i> Resources</button>
-                    <button class="tab-link" data-tab="timetable"><i class="fa-solid fa-table"></i> Timetable</button>
-                </div>
-
-                <div id="announcements" class="tab-content active">
-                    <div class="content-section">
-                        <div id="announcements-editor"></div>
-                        <button id="add-announcement" class="button-primary"><i class="fa-solid fa-plus"></i> Add Announcement</button>
-                    </div>
-                </div>
-
-                <div id="events" class="tab-content">
-                    <div class="content-section">
-                        <div id="events-editor"></div>
-                        <button id="add-event" class="button-primary"><i class="fa-solid fa-plus"></i> Add Event</button>
-                    </div>
-                </div>
-
-                <div id="resources" class="tab-content">
-                    <div class="content-section">
-                        <div id="resources-editor"></div>
-                    </div>
-                </div>
-
-                <div id="timetable" class="tab-content">
-                    <div class="content-section">
-                        <div id="timetable-editor"></div>
+                <div class="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card action-card" data-action="announcements">
+                            <div class="dashboard-card-icon">
+                                <i class="fa-solid fa-plus"></i>
+                            </div>
+                            <h3>New Announcement</h3>
+                            <p>Create a new announcement for students</p>
+                        </div>
+                        <div class="dashboard-card action-card" data-action="events">
+                            <div class="dashboard-card-icon">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                            </div>
+                            <h3>Add Event</h3>
+                            <p>Schedule a new event or workshop</p>
+                        </div>
+                        <div class="dashboard-card action-card" data-action="resources">
+                            <div class="dashboard-card-icon">
+                                <i class="fa-solid fa-upload"></i>
+                            </div>
+                            <h3>Upload Resource</h3>
+                            <p>Add study materials and documents</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Announcements Section -->
+            <div id="announcements" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Announcements</h1>
+                        <p>Manage announcements and important notices</p>
+                    </div>
+                    <div class="page-actions">
+                        <button id="add-announcement" class="button-primary">
+                            <i class="fa-solid fa-plus"></i>
+                            New Announcement
+                        </button>
+                        <button id="save-announcements" class="button-secondary">
+                            <i class="fa-solid fa-download"></i>
+                            Export Data
+                        </button>
+                    </div>
+                </div>
+                <div id="announcements-editor"></div>
+            </div>
+
+            <!-- Events Section -->
+            <div id="events" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Events</h1>
+                        <p>Manage events, workshops, and activities</p>
+                    </div>
+                    <div class="page-actions">
+                        <button id="add-event" class="button-primary">
+                            <i class="fa-solid fa-plus"></i>
+                            New Event
+                        </button>
+                        <button id="save-events" class="button-secondary">
+                            <i class="fa-solid fa-download"></i>
+                            Export Data
+                        </button>
+                    </div>
+                </div>
+                <div id="events-editor"></div>
+            </div>
+
+            <!-- Banners Section -->
+            <div id="banners" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Banners</h1>
+                        <p>Manage important announcements and alerts on the homepage</p>
+                    </div>
+                    <div class="page-actions">
+                        <button id="add-banner" class="button-primary">
+                            <i class="fa-solid fa-plus"></i>
+                            New Banner
+                        </button>
+                        <button id="refresh-banners" class="button-secondary">
+                            <i class="fa-solid fa-sync"></i>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="banner-form" class="admin-form" style="display: none;">
+                    <h3 id="banner-form-title">New Banner</h3>
+                    <form id="banner-form-element">
+                        <input type="hidden" id="banner-id">
+                        
+                        <div class="form-group">
+                            <label for="banner-type">Banner Type *</label>
+                            <select id="banner-type" required>
+                                <option value="info">Info (Blue)</option>
+                                <option value="success">Success (Green)</option>
+                                <option value="important">Important (Orange)</option>
+                                <option value="urgent">Urgent (Red)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="banner-message">Message *</label>
+                            <textarea id="banner-message" rows="3" required 
+                                placeholder="Enter the banner message"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="banner-link">Link URL</label>
+                                <input type="url" id="banner-link" 
+                                    placeholder="https://example.com/page">
+                            </div>
+                            <div class="form-group">
+                                <label for="banner-link-text">Link Text</label>
+                                <input type="text" id="banner-link-text" 
+                                    placeholder="Learn More" value="Learn More">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="banner-start-date">Start Date & Time *</label>
+                                <input type="datetime-local" id="banner-start-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="banner-end-date">End Date & Time *</label>
+                                <input type="datetime-local" id="banner-end-date" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="banner-priority">Priority (0-100)</label>
+                                <input type="number" id="banner-priority" min="0" max="100" value="0"
+                                    placeholder="Higher priority shows first">
+                            </div>
+                            <div class="form-group">
+                                <label for="banner-active">Status</label>
+                                <div class="form-toggle">
+                                    <input type="checkbox" id="banner-active" checked>
+                                    <label for="banner-active">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="button-primary">
+                                <i class="fa-solid fa-save"></i>
+                                Save Banner
+                            </button>
+                            <button type="button" id="cancel-banner" class="button-secondary">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div id="banners-list" class="admin-table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Message</th>
+                                <th>Duration</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="banners-table-body">
+                            <!-- Banners will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Resources Section -->
+            <div id="resources" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Resources</h1>
+                        <p>Manage study materials and documents</p>
+                    </div>
+                    <div class="page-actions">
+                        <button id="save-resources" class="button-secondary">
+                            <i class="fa-solid fa-download"></i>
+                            Export Data
+                        </button>
+                    </div>
+                </div>
+                <div id="resources-editor"></div>
+            </div>
+
+            <!-- Timetable Section -->
+            <div id="timetable" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Timetable</h1>
+                        <p>Manage class schedules and timetables</p>
+                    </div>
+                    <div class="page-actions">
+                        <button id="save-timetable" class="button-secondary">
+                            <i class="fa-solid fa-download"></i>
+                            Export Data
+                        </button>
+                    </div>
+                </div>
+                <div id="timetable-editor"></div>
+            </div>
+                </div>
+            </div>
+        </section>
     </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023-27 CSE – C Section | <a href="login.html">Admin Login</a> | <a href="../about.html#contact">Support</a></p>
+        </div>
+    </footer>
 
     <!-- Confirmation Modal -->
     <div id="confirmation-modal" class="modal">

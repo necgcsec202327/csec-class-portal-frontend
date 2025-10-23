@@ -23,22 +23,26 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.setAttribute('data-theme', currentTheme);
     }
 
-    themeToggle.addEventListener('click', () => {
-        let theme = document.documentElement.getAttribute('data-theme');
-        if (theme === 'dark') {
-            theme = 'light';
-        } else {
-            theme = 'dark';
-        }
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    });
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            let theme = document.documentElement.getAttribute('data-theme');
+            if (theme === 'dark') {
+                theme = 'light';
+            } else {
+                theme = 'dark';
+            }
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        });
+    }
 
-    hamburger.addEventListener('click', () => {
-        const expanded = hamburger.getAttribute('aria-expanded') === 'true';
-        hamburger.setAttribute('aria-expanded', (!expanded).toString());
-        navLinks.classList.toggle('active');
-    });
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            const expanded = hamburger.getAttribute('aria-expanded') === 'true';
+            hamburger.setAttribute('aria-expanded', (!expanded).toString());
+            navLinks.classList.toggle('active');
+        });
+    }
 
     // Modal logic
     const modal = document.getElementById('announcement-modal');
@@ -90,7 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const announcementsList = document.getElementById('announcements-list');
     if (announcementsList) {
         showSkeletonLoader(announcementsList, 3);
-        window.API.get(window.CONFIG.ENDPOINTS.ANNOUNCEMENTS, 'announcements.json')
+        fetch('data/announcements.json')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
             .then(data => {
                 announcementsList.innerHTML = '';
                 if (data.length === 0) {

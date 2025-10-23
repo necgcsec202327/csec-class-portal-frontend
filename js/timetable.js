@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('timetable-viewer');
-  window.API.get(window.CONFIG.ENDPOINTS.TIMETABLE, 'timetable.json')
+  fetch('data/timetable.json')
+    .then(r => r.json())
     .then(data => {
       // data: { url: string, type?: 'image'|'pdf' }
       const { url, type } = data || {};
