@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnText = loginButton.querySelector('.btn-text');
     const btnLoader = loginButton.querySelector('.btn-loader');
 
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) ? window.CONFIG.API_BASE_URL : '';
+
     // Handle form submission
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -13,35 +15,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = passwordInput.value.trim();
         
         if (!password) {
-            showError('Please enter a password');
+            showError('Please enter the admin key');
             return;
         }
 
         // Show loading state
-        loginButton.classList.add('loading');
-        loginButton.disabled = true;
+        setLoading(true);
         hideError();
 
-        // Simulate API call delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+            // Call backend auth endpoint
+            const resp = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: password })
+            });
 
-        // Simple password check (in production, this would be server-side)
-        if (password === 'admin123') {
+            if (!resp.ok) {
+                const data = await safeJson(resp);
+                throw new Error(data && data.error ? data.error : 'Authentication failed');
+            }
+
+            const data = await resp.json();
+            const token = data.token;
+            if (!token) throw new Error('Invalid response from server');
+
+            // Persist admin session and token
             sessionStorage.setItem('isAdmin', 'true');
-            
+            sessionStorage.setItem('authToken', token);
+            // Also store in localStorage for API utilities if needed
+            localStorage.setItem('authToken', token);
+
             // Success animation
             btnText.textContent = 'Success!';
             loginButton.style.background = 'var(--success-color)';
-            
+
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
-            }, 500);
-        } else {
-            // Reset button state
-            loginButton.classList.remove('loading');
-            loginButton.disabled = false;
-            
-            showError('Incorrect password. Please try again.');
+            }, 400);
+        } catch (err) {
+            setLoading(false);
+            showError(err.message || 'Login failed');
             passwordInput.focus();
             passwordInput.select();
         }
@@ -65,5 +79,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideError() {
         errorMessage.style.display = 'none';
+    }
+
+    function setLoading(isLoading) {
+        if (isLoading) {
+            loginButton.classList.add('loading');
+            loginButton.disabled = true;
+            if (btnLoader) btnLoader.style.display = 'inline-block';
+            if (btnText) btnText.textContent = 'Signing in...';
+        } else {
+            loginButton.classList.remove('loading');
+            loginButton.disabled = false;
+            if (btnLoader) btnLoader.style.display = 'none';
+            if (btnText) btnText.textContent = 'Sign In';
+        }
+    }
+
+    async function safeJson(resp) {
+        try {
+            return await resp.json();
+        } catch {
+            return null;
+        }
     }
 });
