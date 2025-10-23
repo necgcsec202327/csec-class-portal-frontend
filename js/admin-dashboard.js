@@ -2,6 +2,7 @@
 let announcementsData = [];
 let eventsData = [];
 let resourceTree = null;
+let resourcePath = [];
 let timetableData = { url: '', type: 'image' };
 
 // API Base URL - use config or fallback
@@ -358,22 +359,154 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderResources() {
-        const resourcesEditor = document.getElementById('resources-editor');
-        if (!resourcesEditor) return;
+        const editor = document.getElementById('resources-editor');
+        if (!editor) return;
 
-        resourcesEditor.innerHTML = `
+        const node = getNodeAtPathAdmin(resourceTree, resourcePath);
+
+        editor.innerHTML = `
             <div class="admin-item-card">
-                <h3>Resources Management</h3>
-                <p>Resource management interface will be implemented here.</p>
-                <p>Current resources: ${countResources(resourceTree)}</p>
-                <div class="admin-form-group">
-                    <button class="button-primary" onclick="alert('Resource management coming soon!')">
-                        <i class="fa-solid fa-plus"></i>
-                        Add Resource
-                    </button>
+                <div class="page-header" style="margin-top:0;">
+                    <div>
+                        <h1>Resources</h1>
+                        <p>Google Drive–style editor. Folders first, then files. Total: ${countResources(resourceTree)} files</p>
+                    </div>
+                    <div class="page-actions">
+                        <button id="res-add-folder" class="button-secondary"><i class="fa-solid fa-folder-plus"></i> New Folder</button>
+                        <button id="res-add-file" class="button-secondary"><i class="fa-solid fa-file-circle-plus"></i> New File</button>
+                        <button id="res-save" class="button-primary"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                    </div>
                 </div>
+
+                <div id="res-breadcrumb" style="margin-bottom: 12px;"></div>
+
+                <div id="res-list" class="resource-grid" role="list"></div>
             </div>
         `;
+
+        renderResourceBreadcrumb();
+        renderResourceList(node);
+
+        document.getElementById('res-add-folder').addEventListener('click', () => {
+            const name = prompt('Folder name');
+            if (!name) return;
+            const target = getNodeAtPathAdmin(resourceTree, resourcePath);
+            target.children = target.children || [];
+            target.children.push({ id: uid(), name, type: 'folder', children: [] });
+            renderResources();
+        });
+
+        document.getElementById('res-add-file').addEventListener('click', () => {
+            const name = prompt('File name (e.g., Notes Chapter 1.pdf)');
+            if (!name) return;
+            const url = prompt('File URL (Google Drive/Docs/Link)');
+            if (!url) return;
+            const target = getNodeAtPathAdmin(resourceTree, resourcePath);
+            target.children = target.children || [];
+            target.children.push({ id: uid(), name, type: 'file', url });
+            renderResources();
+        });
+
+        document.getElementById('res-save').addEventListener('click', async () => {
+            try {
+                const payload = stripIds(resourceTree);
+                const resp = await fetch(`${API_BASE_URL}/api/resources`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if (!resp.ok) throw new Error('Failed to save resources');
+                showToast('Resources saved successfully', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || 'Save failed', 'error');
+            }
+        });
+    }
+
+    function renderResourceBreadcrumb() {
+        const bc = document.getElementById('res-breadcrumb');
+        if (!bc) return;
+        const parts = ['Resources', ...resourcePath];
+        bc.innerHTML = parts.map((p, idx) => `<button class="crumb" data-idx="${idx}">${idx===0?'<i class=\"fa-solid fa-house\"></i>':''} ${p}</button>`).join('<span class="crumb-sep"> / </span>');
+        bc.querySelectorAll('.crumb').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const i = parseInt(e.currentTarget.getAttribute('data-idx'));
+                resourcePath = resourcePath.slice(0, Math.max(0, i));
+                renderResources();
+            });
+        });
+    }
+
+    function renderResourceList(node) {
+        const list = document.getElementById('res-list');
+        if (!list) return;
+        const items = [...(node.children||[])];
+        items.sort((a,b)=> (a.type===b.type ? a.name.localeCompare(b.name) : (a.type==='folder'?-1:1)));
+        list.innerHTML = '';
+        if (items.length === 0) {
+            list.innerHTML = `<div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No items here. Use New Folder or New File.</p></div>`;
+            return;
+        }
+        items.forEach((it, idx) => {
+            const el = document.createElement('div');
+            el.className = 'resource-item ' + (it.type==='folder'?'folder':'file');
+            el.setAttribute('role','listitem');
+            el.innerHTML = `
+                <div class="icon"><i class="fa-solid ${it.type==='folder'?'fa-folder':'fa-file'}"></i></div>
+                <div class="meta">
+                    <div class="name" title="${it.name}">${it.name}</div>
+                    <div class="sub">${it.type==='folder'?'Folder':'File'}</div>
+                </div>
+                <div class="admin-item-actions">
+                    <button class="action-btn" data-act="rename" title="Rename"><i class="fa-solid fa-pen"></i></button>
+                    <button class="action-btn delete" data-act="delete" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+            if (it.type === 'folder') {
+                el.addEventListener('dblclick', () => {
+                    resourcePath = [...resourcePath, it.name];
+                    renderResources();
+                });
+            } else if (it.type === 'file' && it.url) {
+                el.addEventListener('dblclick', () => window.open(it.url, '_blank'));
+            }
+            el.querySelector('[data-act="rename"]').addEventListener('click', () => {
+                const name = prompt('New name', it.name);
+                if (!name) return;
+                it.name = name;
+                renderResources();
+            });
+            el.querySelector('[data-act="delete"]').addEventListener('click', () => {
+                if (!confirm(`Delete ${it.name}?`)) return;
+                const target = getNodeAtPathAdmin(resourceTree, resourcePath);
+                target.children.splice(idx,1);
+                renderResources();
+            });
+            list.appendChild(el);
+        });
+    }
+
+    function getNodeAtPathAdmin(tree, pathArr) {
+        let node = tree;
+        for (const segment of pathArr) {
+            if (!node.children) return node;
+            const next = node.children.find(ch => ch.type==='folder' && ch.name===segment);
+            if (!next) return node;
+            node = next;
+        }
+        return node;
+    }
+
+    function stripIds(node) {
+        if (!node) return node;
+        if (node.type === 'folder') {
+            return { name: node.name, type: 'folder', children: (node.children||[]).map(stripIds) };
+        }
+        return { name: node.name, type: 'file', url: node.url };
     }
 
     function renderTimetable() {
