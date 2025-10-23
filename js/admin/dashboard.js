@@ -8,14 +8,6 @@ let timetableData = { url: '', type: 'image' };
 // API Base URL - use config or fallback
 const API_BASE_URL = window.CONFIG?.API_BASE_URL?.replace('/api', '') || 'http://localhost:4000';
 
-// Debug: Log configuration on load
-console.log('🔧 Admin Dashboard Configuration:', {
-    API_BASE_URL,
-    fullConfig: window.CONFIG,
-    authToken: sessionStorage.getItem('authToken') ? '✅ Present' : '❌ Missing',
-    isAdmin: sessionStorage.getItem('isAdmin')
-});
-
 document.addEventListener('DOMContentLoaded', () => {
     // Check authentication
     if (sessionStorage.getItem('isAdmin') !== 'true') {
@@ -344,9 +336,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.getElementById('res-save').addEventListener('click', async () => {
+            const btn = document.getElementById('res-save');
             try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                
                 const payload = stripIds(resourceTree);
-                console.log('💾 Saving resources to DB (inline)...', { fileCount: countResources(resourceTree) });
                 const resp = await fetch(`${API_BASE_URL}/api/resources`, {
                     method: 'PUT',
                     headers: {
@@ -355,14 +350,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(payload)
                 });
-                const respText = await resp.text();
-                console.log('📥 Response status:', resp.status, 'Body:', respText);
-                if (!resp.ok) throw new Error(`Failed to save resources: ${resp.status} ${respText}`);
-                showToast('Resources saved successfully', 'success');
+                
+                if (!resp.ok) {
+                    const error = await resp.text();
+                    throw new Error(error || 'Failed to save resources');
+                }
+                
+                const count = countResources(resourceTree);
+                showToast(`Resource tree with ${count} files saved to database successfully`, 'success');
                 updateDashboardStats();
             } catch (err) {
-                console.error('❌ Save resources failed (inline):', err);
+                console.error('Save resources error:', err);
                 showToast(err.message || 'Save failed', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
             }
         });
     }
@@ -909,12 +911,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Save/Export handlers (export still available locally if needed)
+    // Save handlers - Update DB with current data
     const saveAnnouncementsBtn = document.getElementById('save-announcements');
     if (saveAnnouncementsBtn) {
         saveAnnouncementsBtn.addEventListener('click', async () => {
             try {
-                console.log('💾 Saving announcements to DB...', { count: announcementsData.length });
+                saveAnnouncementsBtn.disabled = true;
+                saveAnnouncementsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                
                 const resp = await fetch(`${API_BASE_URL}/api/announcements`, {
                     method: 'PUT',
                     headers: {
@@ -923,14 +927,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({ items: announcementsData })
                 });
-                const respText = await resp.text();
-                console.log('📥 Response status:', resp.status, 'Body:', respText);
-                if (!resp.ok) throw new Error(`Failed to save announcements: ${resp.status} ${respText}`);
-                showToast('Announcements saved to DB');
+                
+                if (!resp.ok) {
+                    const error = await resp.text();
+                    throw new Error(error || 'Failed to save announcements');
+                }
+                
+                showToast(`${announcementsData.length} announcements saved to database successfully`, 'success');
                 updateDashboardStats();
             } catch (e) {
-                console.error('❌ Save announcements failed:', e);
-                showToast(`Save failed: ${e.message}`, 'error');
+                console.error('Save announcements error:', e);
+                showToast(e.message || 'Failed to save announcements', 'error');
+            } finally {
+                saveAnnouncementsBtn.disabled = false;
+                saveAnnouncementsBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save to Database';
             }
         });
     }
@@ -939,7 +949,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveEventsBtn) {
         saveEventsBtn.addEventListener('click', async () => {
             try {
-                console.log('💾 Saving events to DB...', { count: eventsData.length });
+                saveEventsBtn.disabled = true;
+                saveEventsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                
                 const resp = await fetch(`${API_BASE_URL}/api/events`, {
                     method: 'PUT',
                     headers: {
@@ -948,14 +960,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({ items: eventsData })
                 });
-                const respText = await resp.text();
-                console.log('📥 Response status:', resp.status, 'Body:', respText);
-                if (!resp.ok) throw new Error(`Failed to save events: ${resp.status} ${respText}`);
-                showToast('Events saved to DB');
+                
+                if (!resp.ok) {
+                    const error = await resp.text();
+                    throw new Error(error || 'Failed to save events');
+                }
+                
+                showToast(`${eventsData.length} events saved to database successfully`, 'success');
                 updateDashboardStats();
             } catch (e) {
-                console.error('❌ Save events failed:', e);
-                showToast(`Save failed: ${e.message}`, 'error');
+                console.error('Save events error:', e);
+                showToast(e.message || 'Failed to save events', 'error');
+            } finally {
+                saveEventsBtn.disabled = false;
+                saveEventsBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save to Database';
             }
         });
     }
@@ -964,8 +982,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveResourcesBtn) {
         saveResourcesBtn.addEventListener('click', async () => {
             try {
+                saveResourcesBtn.disabled = true;
+                saveResourcesBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                
                 const payload = stripIds(resourceTree);
-                console.log('💾 Saving resources to DB...', { fileCount: countResources(resourceTree) });
                 const resp = await fetch(`${API_BASE_URL}/api/resources`, {
                     method: 'PUT',
                     headers: {
@@ -974,14 +994,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(payload)
                 });
-                const respText = await resp.text();
-                console.log('📥 Response status:', resp.status, 'Body:', respText);
-                if (!resp.ok) throw new Error(`Failed to save resources: ${resp.status} ${respText}`);
-                showToast('Resources saved to DB');
+                
+                if (!resp.ok) {
+                    const error = await resp.text();
+                    throw new Error(error || 'Failed to save resources');
+                }
+                
+                const count = countResources(resourceTree);
+                showToast(`Resource tree with ${count} files saved to database successfully`, 'success');
                 updateDashboardStats();
             } catch (e) {
-                console.error('❌ Save resources failed:', e);
-                showToast(`Save failed: ${e.message}`, 'error');
+                console.error('Save resources error:', e);
+                showToast(e.message || 'Failed to save resources', 'error');
+            } finally {
+                saveResourcesBtn.disabled = false;
+                saveResourcesBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save to Database';
             }
         });
     }
@@ -990,7 +1017,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveTimetableBtn) {
         saveTimetableBtn.addEventListener('click', async () => {
             try {
-                console.log('💾 Saving timetable to DB...', timetableData);
+                saveTimetableBtn.disabled = true;
+                saveTimetableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                
                 const resp = await fetch(`${API_BASE_URL}/api/timetable`, {
                     method: 'PUT',
                     headers: {
@@ -999,14 +1028,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(timetableData)
                 });
-                const respText = await resp.text();
-                console.log('📥 Response status:', resp.status, 'Body:', respText);
-                if (!resp.ok) throw new Error(`Failed to save timetable: ${resp.status} ${respText}`);
-                showToast('Timetable saved to DB');
+                
+                if (!resp.ok) {
+                    const error = await resp.text();
+                    throw new Error(error || 'Failed to save timetable');
+                }
+                
+                showToast('Timetable saved to database successfully', 'success');
                 updateDashboardStats();
             } catch (e) {
-                console.error('❌ Save timetable failed:', e);
-                showToast(`Save failed: ${e.message}`, 'error');
+                console.error('Save timetable error:', e);
+                showToast(e.message || 'Failed to save timetable', 'error');
+            } finally {
+                saveTimetableBtn.disabled = false;
+                saveTimetableBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save to Database';
             }
         });
     }
