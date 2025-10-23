@@ -8,6 +8,14 @@ let timetableData = { url: '', type: 'image' };
 // API Base URL - use config or fallback
 const API_BASE_URL = window.CONFIG?.API_BASE_URL?.replace('/api', '') || 'http://localhost:4000';
 
+// Debug: Log configuration on load
+console.log('🔧 Admin Dashboard Configuration:', {
+    API_BASE_URL,
+    fullConfig: window.CONFIG,
+    authToken: sessionStorage.getItem('authToken') ? '✅ Present' : '❌ Missing',
+    isAdmin: sessionStorage.getItem('isAdmin')
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // Check authentication
     if (sessionStorage.getItem('isAdmin') !== 'true') {
@@ -338,6 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('res-save').addEventListener('click', async () => {
             try {
                 const payload = stripIds(resourceTree);
+                console.log('💾 Saving resources to DB (inline)...', { fileCount: countResources(resourceTree) });
                 const resp = await fetch(`${API_BASE_URL}/api/resources`, {
                     method: 'PUT',
                     headers: {
@@ -346,10 +355,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(payload)
                 });
-                if (!resp.ok) throw new Error('Failed to save resources');
+                const respText = await resp.text();
+                console.log('📥 Response status:', resp.status, 'Body:', respText);
+                if (!resp.ok) throw new Error(`Failed to save resources: ${resp.status} ${respText}`);
                 showToast('Resources saved successfully', 'success');
+                updateDashboardStats();
             } catch (err) {
-                console.error(err);
+                console.error('❌ Save resources failed (inline):', err);
                 showToast(err.message || 'Save failed', 'error');
             }
         });
@@ -902,6 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveAnnouncementsBtn) {
         saveAnnouncementsBtn.addEventListener('click', async () => {
             try {
+                console.log('💾 Saving announcements to DB...', { count: announcementsData.length });
                 const resp = await fetch(`${API_BASE_URL}/api/announcements`, {
                     method: 'PUT',
                     headers: {
@@ -910,11 +923,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({ items: announcementsData })
                 });
-                if (!resp.ok) throw new Error('Failed to save announcements');
+                const respText = await resp.text();
+                console.log('📥 Response status:', resp.status, 'Body:', respText);
+                if (!resp.ok) throw new Error(`Failed to save announcements: ${resp.status} ${respText}`);
                 showToast('Announcements saved to DB');
+                updateDashboardStats();
             } catch (e) {
-                console.error(e);
-                showToast('Save failed', 'error');
+                console.error('❌ Save announcements failed:', e);
+                showToast(`Save failed: ${e.message}`, 'error');
             }
         });
     }
@@ -923,6 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveEventsBtn) {
         saveEventsBtn.addEventListener('click', async () => {
             try {
+                console.log('💾 Saving events to DB...', { count: eventsData.length });
                 const resp = await fetch(`${API_BASE_URL}/api/events`, {
                     method: 'PUT',
                     headers: {
@@ -931,11 +948,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({ items: eventsData })
                 });
-                if (!resp.ok) throw new Error('Failed to save events');
+                const respText = await resp.text();
+                console.log('📥 Response status:', resp.status, 'Body:', respText);
+                if (!resp.ok) throw new Error(`Failed to save events: ${resp.status} ${respText}`);
                 showToast('Events saved to DB');
+                updateDashboardStats();
             } catch (e) {
-                console.error(e);
-                showToast('Save failed', 'error');
+                console.error('❌ Save events failed:', e);
+                showToast(`Save failed: ${e.message}`, 'error');
             }
         });
     }
@@ -945,6 +965,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveResourcesBtn.addEventListener('click', async () => {
             try {
                 const payload = stripIds(resourceTree);
+                console.log('💾 Saving resources to DB...', { fileCount: countResources(resourceTree) });
                 const resp = await fetch(`${API_BASE_URL}/api/resources`, {
                     method: 'PUT',
                     headers: {
@@ -953,11 +974,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(payload)
                 });
-                if (!resp.ok) throw new Error('Failed to save resources');
+                const respText = await resp.text();
+                console.log('📥 Response status:', resp.status, 'Body:', respText);
+                if (!resp.ok) throw new Error(`Failed to save resources: ${resp.status} ${respText}`);
                 showToast('Resources saved to DB');
+                updateDashboardStats();
             } catch (e) {
-                console.error(e);
-                showToast('Save failed', 'error');
+                console.error('❌ Save resources failed:', e);
+                showToast(`Save failed: ${e.message}`, 'error');
             }
         });
     }
@@ -966,6 +990,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveTimetableBtn) {
         saveTimetableBtn.addEventListener('click', async () => {
             try {
+                console.log('💾 Saving timetable to DB...', timetableData);
                 const resp = await fetch(`${API_BASE_URL}/api/timetable`, {
                     method: 'PUT',
                     headers: {
@@ -974,11 +999,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(timetableData)
                 });
-                if (!resp.ok) throw new Error('Failed to save timetable');
+                const respText = await resp.text();
+                console.log('📥 Response status:', resp.status, 'Body:', respText);
+                if (!resp.ok) throw new Error(`Failed to save timetable: ${resp.status} ${respText}`);
                 showToast('Timetable saved to DB');
+                updateDashboardStats();
             } catch (e) {
-                console.error(e);
-                showToast('Save failed', 'error');
+                console.error('❌ Save timetable failed:', e);
+                showToast(`Save failed: ${e.message}`, 'error');
             }
         });
     }
