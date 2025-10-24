@@ -336,38 +336,72 @@ document.addEventListener('DOMContentLoaded', () => {
             fileInput.click();
         });
 
-        fileInput.addEventListener('change', (e) => {
+        fileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
 
             const target = getNodeAtPathAdmin(resourceTree, resourcePath);
             target.children = target.children || [];
 
-            files.forEach(file => {
-                // In a real implementation, you'd upload to a file hosting service (Cloudinary, S3, etc.)
-                // For now, show instructions to use Google Drive or external hosting
-                const uploadUrl = prompt(
-                    `Upload "${file.name}" to Google Drive or file host, then paste the public URL here:\n\n` +
-                    `Tips:\n` +
-                    `• Google Drive: Right-click → Get link → Anyone with link can view\n` +
-                    `• Dropbox: Share → Create link → Copy link\n` +
-                    `• Or upload to Imgur, Cloudinary, etc.`,
-                    ''
-                );
-                
-                if (uploadUrl && uploadUrl.trim()) {
+            const uploadBtn = document.getElementById('res-upload-file');
+            const originalBtnText = uploadBtn.innerHTML;
+            
+            let successCount = 0;
+            let failCount = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                uploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Uploading ${i + 1}/${files.length}...`;
+                uploadBtn.disabled = true;
+
+                try {
+                    // Upload file to backend
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch(`${API_BASE_URL}/api/resources/upload`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Upload failed: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    // Add the uploaded file to the resource tree
                     target.children.push({ 
                         id: uid(), 
-                        name: file.name, 
+                        name: result.file.name, 
                         type: 'file', 
-                        url: uploadUrl.trim() 
+                        url: `${API_BASE_URL}${result.file.url}`,
+                        size: result.file.size,
+                        uploadedAt: result.file.uploadedAt
                     });
+                    
+                    successCount++;
+                } catch (error) {
+                    console.error('File upload error:', error);
+                    failCount++;
+                    showToast(`Failed to upload "${file.name}": ${error.message}`, 'error');
                 }
-            });
+            }
 
+            uploadBtn.innerHTML = originalBtnText;
+            uploadBtn.disabled = false;
             fileInput.value = ''; // Reset input
             renderResources();
-            showToast(`${files.length} file(s) added. Don't forget to save!`, 'info');
+            
+            if (successCount > 0) {
+                showToast(`${successCount} file(s) uploaded successfully! Don't forget to save.`, 'success');
+            }
+            if (failCount > 0) {
+                showToast(`${failCount} file(s) failed to upload.`, 'error');
+            }
         });
 
         // Add Link (manual URL entry)
