@@ -602,33 +602,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (fileInput) {
-            fileInput.addEventListener('change', (e) => {
+            fileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
 
-                // Determine type from file extension
-                const ext = file.name.split('.').pop().toLowerCase();
-                const isPdf = ext === 'pdf';
-                
-                // Show upload instructions
-                const uploadUrl = prompt(
-                    `To use "${file.name}", please:\n\n` +
-                    `1. Upload it to a file hosting service:\n` +
-                    `   • Google Drive: Upload → Right-click → Get link → "Anyone with the link"\n` +
-                    `   • Imgur (for images): Upload → Copy direct link\n` +
-                    `   • Dropbox: Upload → Share → Copy link\n\n` +
-                    `2. Paste the public URL here:`,
-                    ''
-                );
+                const originalBtnText = uploadBtn.innerHTML;
+                uploadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+                uploadBtn.disabled = true;
 
-                if (uploadUrl && uploadUrl.trim()) {
-                    timetableData.url = uploadUrl.trim();
-                    timetableData.type = isPdf ? 'pdf' : 'image';
-                    fileInput.value = ''; // Reset
+                try {
+                    // Upload file to backend
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch(`${API_BASE_URL}/api/timetable/upload`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Upload failed');
+                    }
+
+                    const result = await response.json();
+                    
+                    // Update timetable data with uploaded file URL
+                    timetableData.url = `${API_BASE_URL}${result.file.url}`;
+                    timetableData.type = result.file.type;
+                    
+                    showToast(`Timetable "${file.name}" uploaded successfully! Click "Save to Database" to save.`, 'success');
                     renderTimetable();
-                    showToast(`Timetable "${file.name}" linked. Click "Save to Database" to save!`, 'info');
-                } else {
-                    fileInput.value = ''; // Reset if cancelled
+                } catch (error) {
+                    console.error('Timetable upload error:', error);
+                    showToast(`Upload failed: ${error.message}`, 'error');
+                } finally {
+                    uploadBtn.innerHTML = originalBtnText;
+                    uploadBtn.disabled = false;
+                    fileInput.value = ''; // Reset input
                 }
             });
         }
