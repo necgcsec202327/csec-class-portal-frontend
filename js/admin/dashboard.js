@@ -297,11 +297,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="page-header" style="margin-top:0;">
                     <div>
                         <h1>Resources</h1>
-                        <p>Google Drive–style editor. Folders first, then files. Total: ${countResources(resourceTree)} files</p>
+                        <p>Google Drive–style file explorer. Folders first, then files. Total: ${countResources(resourceTree)} files</p>
                     </div>
                     <div class="page-actions">
                         <button id="res-add-folder" class="button-secondary"><i class="fa-solid fa-folder-plus"></i> New Folder</button>
-                        <button id="res-add-file" class="button-secondary"><i class="fa-solid fa-file-circle-plus"></i> New File</button>
+                        <button id="res-upload-file" class="button-secondary"><i class="fa-solid fa-upload"></i> Upload File</button>
+                        <button id="res-add-link" class="button-secondary"><i class="fa-solid fa-link"></i> Add Link</button>
                         <button id="res-save" class="button-primary"><i class="fa-solid fa-floppy-disk"></i> Save</button>
                     </div>
                 </div>
@@ -310,29 +311,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <div id="res-list" class="resource-grid" role="list"></div>
             </div>
+
+            <!-- Hidden file input for uploads -->
+            <input type="file" id="res-file-input" style="display: none;" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.mp4,.jpg,.jpeg,.png">
         `;
 
         renderResourceBreadcrumb();
         renderResourceList(node);
 
+        // Add Folder
         document.getElementById('res-add-folder').addEventListener('click', () => {
-            const name = prompt('Folder name');
-            if (!name) return;
+            const name = prompt('Folder name:');
+            if (!name || !name.trim()) return;
             const target = getNodeAtPathAdmin(resourceTree, resourcePath);
             target.children = target.children || [];
-            target.children.push({ id: uid(), name, type: 'folder', children: [] });
+            target.children.push({ id: uid(), name: name.trim(), type: 'folder', children: [] });
             renderResources();
+            showToast(`Folder "${name}" created. Don't forget to save!`, 'info');
         });
 
-        document.getElementById('res-add-file').addEventListener('click', () => {
-            const name = prompt('File name (e.g., Notes Chapter 1.pdf)');
-            if (!name) return;
-            const url = prompt('File URL (Google Drive/Docs/Link)');
-            if (!url) return;
+        // Upload File (trigger file picker)
+        const fileInput = document.getElementById('res-file-input');
+        document.getElementById('res-upload-file').addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
             const target = getNodeAtPathAdmin(resourceTree, resourcePath);
             target.children = target.children || [];
-            target.children.push({ id: uid(), name, type: 'file', url });
+
+            files.forEach(file => {
+                // In a real implementation, you'd upload to a file hosting service (Cloudinary, S3, etc.)
+                // For now, show instructions to use Google Drive or external hosting
+                const uploadUrl = prompt(
+                    `Upload "${file.name}" to Google Drive or file host, then paste the public URL here:\n\n` +
+                    `Tips:\n` +
+                    `• Google Drive: Right-click → Get link → Anyone with link can view\n` +
+                    `• Dropbox: Share → Create link → Copy link\n` +
+                    `• Or upload to Imgur, Cloudinary, etc.`,
+                    ''
+                );
+                
+                if (uploadUrl && uploadUrl.trim()) {
+                    target.children.push({ 
+                        id: uid(), 
+                        name: file.name, 
+                        type: 'file', 
+                        url: uploadUrl.trim() 
+                    });
+                }
+            });
+
+            fileInput.value = ''; // Reset input
             renderResources();
+            showToast(`${files.length} file(s) added. Don't forget to save!`, 'info');
+        });
+
+        // Add Link (manual URL entry)
+        document.getElementById('res-add-link').addEventListener('click', () => {
+            const name = prompt('File/Link name (e.g., "Chapter 1 Notes.pdf"):');
+            if (!name || !name.trim()) return;
+            
+            const url = prompt('Paste the file URL (Google Drive, Dropbox, etc.):');
+            if (!url || !url.trim()) return;
+            
+            const target = getNodeAtPathAdmin(resourceTree, resourcePath);
+            target.children = target.children || [];
+            target.children.push({ id: uid(), name: name.trim(), type: 'file', url: url.trim() });
+            renderResources();
+            showToast(`Link "${name}" added. Don't forget to save!`, 'info');
         });
 
         document.getElementById('res-save').addEventListener('click', async () => {
@@ -458,42 +508,108 @@ document.addEventListener('DOMContentLoaded', () => {
         timetableEditor.innerHTML = `
             <div class="admin-item-card">
                 <div class="admin-form-group">
-                    <label class="admin-form-label">Timetable URL</label>
-                    <input type="url" class="admin-form-input" value="${timetableData.url || ''}" 
-                           placeholder="https://example.com/timetable.pdf" id="timetable-url">
+                    <label class="admin-form-label">Upload Timetable</label>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+                        <button type="button" id="timetable-upload-btn" class="button-secondary">
+                            <i class="fa-solid fa-upload"></i> Upload from Device
+                        </button>
+                        <span style="color: var(--text-color-soft); align-self: center;">or paste URL below</span>
+                    </div>
+                    <input type="file" id="timetable-file-input" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.gif">
                 </div>
+
+                <div class="admin-form-group">
+                    <label class="admin-form-label">Timetable URL (Optional if uploaded)</label>
+                    <input type="url" class="admin-form-input" value="${timetableData.url || ''}" 
+                           placeholder="https://example.com/timetable.pdf or upload from device" id="timetable-url">
+                    <small style="color: var(--text-color-soft); margin-top: 4px; display: block;">
+                        Tip: Upload to Google Drive, Dropbox, or Imgur, then paste the public link here
+                    </small>
+                </div>
+
                 <div class="admin-form-group">
                     <label class="admin-form-label">Type</label>
                     <select class="admin-form-select" id="timetable-type">
-                        <option value="image" ${timetableData.type === 'image' ? 'selected' : ''}>Image</option>
-                        <option value="pdf" ${timetableData.type === 'pdf' ? 'selected' : ''}>PDF</option>
+                        <option value="image" ${timetableData.type === 'image' ? 'selected' : ''}>Image (JPG, PNG)</option>
+                        <option value="pdf" ${timetableData.type === 'pdf' ? 'selected' : ''}>PDF Document</option>
                     </select>
                 </div>
+
                 ${timetableData.url ? `
                     <div class="admin-form-group">
                         <label class="admin-form-label">Preview</label>
-                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; background: var(--bg-color);">
                             ${timetableData.type === 'pdf' ?
-                    `<iframe src="${timetableData.url}" style="width: 100%; height: 300px; border: none;"></iframe>` :
-                    `<img src="${timetableData.url}" style="max-width: 100%; height: auto;" alt="Timetable preview">`
+                    `<iframe src="${timetableData.url}" style="width: 100%; height: 400px; border: none; border-radius: 4px;"></iframe>` :
+                    `<img src="${timetableData.url}" style="max-width: 100%; height: auto; border-radius: 4px;" alt="Timetable preview">`
                 }
                         </div>
                     </div>
-                ` : ''}
+                ` : `
+                    <div class="admin-form-group">
+                        <div style="border: 2px dashed var(--border-color); border-radius: 8px; padding: 48px; text-align: center; color: var(--text-color-soft);">
+                            <i class="fa-solid fa-calendar-days" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <p>No timetable uploaded yet</p>
+                            <p style="font-size: 14px;">Upload an image or PDF, or paste a URL above</p>
+                        </div>
+                    </div>
+                `}
             </div>
         `;
 
-        // Add event listeners for timetable form
-        const urlInput = document.getElementById('timetable-url');
-        const typeSelect = document.getElementById('timetable-type');
+        // Upload button handler
+        const uploadBtn = document.getElementById('timetable-upload-btn');
+        const fileInput = document.getElementById('timetable-file-input');
+        
+        if (uploadBtn) {
+            uploadBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+        }
 
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // Determine type from file extension
+                const ext = file.name.split('.').pop().toLowerCase();
+                const isPdf = ext === 'pdf';
+                
+                // Show upload instructions
+                const uploadUrl = prompt(
+                    `To use "${file.name}", please:\n\n` +
+                    `1. Upload it to a file hosting service:\n` +
+                    `   • Google Drive: Upload → Right-click → Get link → "Anyone with the link"\n` +
+                    `   • Imgur (for images): Upload → Copy direct link\n` +
+                    `   • Dropbox: Upload → Share → Copy link\n\n` +
+                    `2. Paste the public URL here:`,
+                    ''
+                );
+
+                if (uploadUrl && uploadUrl.trim()) {
+                    timetableData.url = uploadUrl.trim();
+                    timetableData.type = isPdf ? 'pdf' : 'image';
+                    fileInput.value = ''; // Reset
+                    renderTimetable();
+                    showToast(`Timetable "${file.name}" linked. Click "Save to Database" to save!`, 'info');
+                } else {
+                    fileInput.value = ''; // Reset if cancelled
+                }
+            });
+        }
+
+        // URL input handler
+        const urlInput = document.getElementById('timetable-url');
         if (urlInput) {
             urlInput.addEventListener('change', (e) => {
-                timetableData.url = e.target.value;
+                timetableData.url = e.target.value.trim();
                 renderTimetable();
             });
         }
 
+        // Type selector handler
+        const typeSelect = document.getElementById('timetable-type');
         if (typeSelect) {
             typeSelect.addEventListener('change', (e) => {
                 timetableData.type = e.target.value;

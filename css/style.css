@@ -879,12 +879,71 @@ h2 i {
     color: var(--primary-color);
 }
 
+.resource-search {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
 .resource-search input {
     padding: 10px 12px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
     background: var(--card-bg);
     color: var(--text-color);
+    font-size: 15px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.resource-search input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* Filter Select Dropdowns */
+.resource-search select,
+#filter-subject,
+#filter-semester,
+#filter-type {
+    padding: 10px 40px 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 15px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+[data-theme="dark"] .resource-search select,
+[data-theme="dark"] #filter-subject,
+[data-theme="dark"] #filter-semester,
+[data-theme="dark"] #filter-type {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23aaa' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+.resource-search select:focus,
+#filter-subject:focus,
+#filter-semester:focus,
+#filter-type:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.resource-search select:hover,
+#filter-subject:hover,
+#filter-semester:hover,
+#filter-type:hover {
+    border-color: var(--secondary-color);
 }
 
 .resource-grid {
@@ -1064,6 +1123,191 @@ h2 i {
     align-items: center;
     gap: 8px;
 }
+
+/* ============================================
+   UNIVERSAL FORM CONTROL STYLES
+   ============================================ */
+
+/* Text Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="search"] {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 15px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="search"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="password"]:hover,
+input[type="url"]:hover,
+input[type="number"]:hover,
+input[type="date"]:hover,
+input[type="datetime-local"]:hover,
+input[type="search"]:hover {
+    border-color: var(--secondary-color);
+}
+
+/* Textarea */
+textarea {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 100px;
+    resize: vertical;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+textarea:hover {
+    border-color: var(--secondary-color);
+}
+
+/* Select Dropdowns */
+select {
+    padding: 12px 40px 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+}
+
+[data-theme="dark"] select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23aaa' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+select:hover {
+    border-color: var(--secondary-color);
+}
+
+/* Checkbox */
+input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid var(--border-color);
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    position: relative;
+}
+
+input[type="checkbox"]:checked {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+input[type="checkbox"]:hover {
+    border-color: var(--primary-color);
+}
+
+/* File Input */
+input[type="file"] {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+input[type="file"]:hover {
+    border-color: var(--primary-color);
+}
+
+input[type="file"]::file-selector-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-right: 12px;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+/* ============================================
+   END UNIVERSAL FORM CONTROL STYLES
+   ============================================ */
 
 .button-primary {
     background: var(--primary-color);
@@ -1787,16 +2031,16 @@ h2 i {
     }
 }
 
-/* Apple-style Footer */
+/* Apple-style Footer - Compact */
 footer {
     background: #F5F5F7;
     color: #1D1D1F;
     text-align: center;
-    padding: 48px 0;
-    margin-top: 120px;
+    padding: 24px 0;
+    margin-top: 80px;
     border-top: 0.5px solid var(--border-color);
-    font-size: 14px;
-    line-height: 1.42857;
+    font-size: 13px;
+    line-height: 1.5;
 }
 
 [data-theme="dark"] footer {
