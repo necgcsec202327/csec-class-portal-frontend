@@ -301,7 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="page-actions">
                         <button id="res-add-folder" class="button-secondary"><i class="fa-solid fa-folder-plus"></i> New Folder</button>
-                        <button id="res-upload-file" class="button-secondary"><i class="fa-solid fa-upload"></i> Upload File</button>
+                        <button id="res-upload-file" class="button-secondary"><i class="fa-solid fa-upload"></i> Upload Files</button>
+                        <button id="res-upload-folder" class="button-secondary"><i class="fa-solid fa-folder-tree"></i> Upload Folder</button>
                         <button id="res-add-link" class="button-secondary"><i class="fa-solid fa-link"></i> Add Link</button>
                         <button id="res-save" class="button-primary"><i class="fa-solid fa-floppy-disk"></i> Save</button>
                     </div>
@@ -312,8 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div id="res-list" class="resource-grid" role="list"></div>
             </div>
 
-            <!-- Hidden file input for uploads -->
+            <!-- Hidden file inputs for uploads -->
             <input type="file" id="res-file-input" style="display: none;" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.mp4,.jpg,.jpeg,.png">
+            <input type="file" id="res-folder-input" style="display: none;" webkitdirectory directory multiple>
         `;
 
         renderResourceBreadcrumb();
@@ -398,6 +400,129 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (successCount > 0) {
                 showToast(`${successCount} file(s) uploaded successfully! Don't forget to save.`, 'success');
+            }
+            if (failCount > 0) {
+                showToast(`${failCount} file(s) failed to upload.`, 'error');
+            }
+        });
+
+        // Upload Folder (trigger folder picker)
+        const folderInput = document.getElementById('res-folder-input');
+        document.getElementById('res-upload-folder').addEventListener('click', () => {
+            folderInput.click();
+        });
+
+        folderInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            const target = getNodeAtPathAdmin(resourceTree, resourcePath);
+            target.children = target.children || [];
+
+            const uploadBtn = document.getElementById('res-upload-folder');
+            const originalBtnText = uploadBtn.innerHTML;
+            
+            // Build folder structure from file paths
+            const folderStructure = {};
+            files.forEach(file => {
+                const relativePath = file.webkitRelativePath || file.name;
+                const parts = relativePath.split('/');
+                // Remove the root folder name (first part)
+                parts.shift();
+                
+                if (parts.length > 0) {
+                    let current = folderStructure;
+                    for (let i = 0; i < parts.length - 1; i++) {
+                        const folderName = parts[i];
+                        if (!current[folderName]) {
+                            current[folderName] = {};
+                        }
+                        current = current[folderName];
+                    }
+                    // Store file at the end
+                    if (!current.__files__) {
+                        current.__files__ = [];
+                    }
+                    current.__files__.push({
+                        file: file,
+                        name: parts[parts.length - 1]
+                    });
+                }
+            });
+
+            let successCount = 0;
+            let failCount = 0;
+            let currentFile = 0;
+
+            // Function to recursively create folders and upload files
+            async function processFolder(structure, parentNode) {
+                for (const key in structure) {
+                    if (key === '__files__') {
+                        // Upload files in this folder
+                        const filesList = structure[key];
+                        for (const fileInfo of filesList) {
+                            currentFile++;
+                            uploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Uploading ${currentFile}/${files.length}...`;
+                            uploadBtn.disabled = true;
+
+                            try {
+                                const formData = new FormData();
+                                formData.append('file', fileInfo.file);
+
+                                const response = await fetch(`${API_BASE_URL}/api/resources/upload`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+                                    },
+                                    body: formData
+                                });
+
+                                if (!response.ok) {
+                                    throw new Error(`Upload failed: ${response.statusText}`);
+                                }
+
+                                const result = await response.json();
+                                
+                                parentNode.children.push({ 
+                                    id: uid(), 
+                                    name: result.file.name, 
+                                    type: 'file', 
+                                    url: `${API_BASE_URL}${result.file.url}`,
+                                    size: result.file.size,
+                                    uploadedAt: result.file.uploadedAt
+                                });
+                                
+                                successCount++;
+                            } catch (error) {
+                                console.error('File upload error:', error);
+                                failCount++;
+                            }
+                        }
+                    } else {
+                        // Create folder
+                        const folderNode = {
+                            id: uid(),
+                            name: key,
+                            type: 'folder',
+                            children: []
+                        };
+                        parentNode.children.push(folderNode);
+                        
+                        // Recursively process subfolders
+                        await processFolder(structure[key], folderNode);
+                    }
+                }
+            }
+
+            await processFolder(folderStructure, target);
+
+            uploadBtn.innerHTML = originalBtnText;
+            uploadBtn.disabled = false;
+            folderInput.value = ''; // Reset input
+            renderResources();
+            
+            if (successCount > 0) {
+                showToast(`Folder uploaded: ${successCount} file(s) uploaded successfully! Don't forget to save.`, 'success');
             }
             if (failCount > 0) {
                 showToast(`${failCount} file(s) failed to upload.`, 'error');
