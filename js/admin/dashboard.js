@@ -414,7 +414,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         folderInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
-            if (files.length === 0) return;
+            console.log('📁 Folder selected, total files:', files.length);
+            
+            if (files.length === 0) {
+                console.log('❌ No files selected');
+                return;
+            }
 
             const target = getNodeAtPathAdmin(resourceTree, resourcePath);
             target.children = target.children || [];
@@ -422,15 +427,57 @@ document.addEventListener('DOMContentLoaded', () => {
             const uploadBtn = document.getElementById('res-upload-folder');
             const originalBtnText = uploadBtn.innerHTML;
             
-            // Build folder structure from file paths
+            // Build complete folder structure including empty folders
             const folderStructure = {};
+            const allFolderPaths = new Set();
+            
+            // First pass: collect all folder paths (including parent folders)
             files.forEach(file => {
                 const relativePath = file.webkitRelativePath || file.name;
                 const parts = relativePath.split('/');
-                // Remove the root folder name (first part)
+                
+                if (parts.length > 1) {
+                    // Remove root folder name
+                    parts.shift();
+                    
+                    // Add all parent folder paths
+                    for (let i = 1; i < parts.length; i++) {
+                        const folderPath = parts.slice(0, i).join('/');
+                        if (folderPath) {
+                            allFolderPaths.add(folderPath);
+                        }
+                    }
+                }
+            });
+            
+            console.log('📂 All folder paths found:', Array.from(allFolderPaths));
+            
+            // Second pass: build structure and add files
+            files.forEach(file => {
+                const relativePath = file.webkitRelativePath || file.name;
+                console.log('Processing file:', relativePath);
+                const parts = relativePath.split('/');
+                
+                // If only one part (root folder name only), skip
+                if (parts.length <= 1) {
+                    console.log('Skipping root-only file:', relativePath);
+                    return;
+                }
+                
+                // Remove the root folder name (first part) 
                 parts.shift();
                 
-                if (parts.length > 0) {
+                // If all we have left is a filename (no subfolders), add it directly
+                if (parts.length === 1) {
+                    if (!folderStructure.__files__) {
+                        folderStructure.__files__ = [];
+                    }
+                    folderStructure.__files__.push({
+                        file: file,
+                        name: parts[0]
+                    });
+                } else if (parts.length > 1) {
+                    // Navigate through folder structure
                     let current = folderStructure;
                     for (let i = 0; i < parts.length - 1; i++) {
                         const folderName = parts[i];
@@ -450,9 +497,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // Third pass: ensure all folder paths exist in structure (for empty folders)
+            allFolderPaths.forEach(folderPath => {
+                const parts = folderPath.split('/');
+                let current = folderStructure;
+                for (const part of parts) {
+                    if (!current[part]) {
+                        current[part] = {};
+                    }
+                    current = current[part];
+                }
+            });
+
+            console.log('📊 Complete folder structure built:', folderStructure);
+
             let successCount = 0;
             let failCount = 0;
             let currentFile = 0;
+            let folderCount = 0;
 
             // Function to recursively create folders and upload files
             async function processFolder(structure, parentNode) {
@@ -460,12 +522,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (key === '__files__') {
                         // Upload files in this folder
                         const filesList = structure[key];
+                        console.log(`📤 Uploading ${filesList.length} files in current folder`);
+                        
                         for (const fileInfo of filesList) {
                             currentFile++;
                             uploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Uploading ${currentFile}/${files.length}...`;
                             uploadBtn.disabled = true;
 
                             try {
+                                console.log(`⬆️  Uploading file ${currentFile}/${files.length}:`, fileInfo.name);
+                                
                                 const formData = new FormData();
                                 formData.append('file', fileInfo.file);
 
@@ -478,10 +544,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 });
 
                                 if (!response.ok) {
-                                    throw new Error(`Upload failed: ${response.statusText}`);
+                                    const errorText = await response.text();
+                                    throw new Error(`Upload failed: ${response.statusText} - ${errorText}`);
                                 }
 
                                 const result = await response.json();
+                                console.log('✅ Upload successful:', result.file.name);
                                 
                                 parentNode.children.push({ 
                                     id: uid(), 
@@ -494,12 +562,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 
                                 successCount++;
                             } catch (error) {
-                                console.error('File upload error:', error);
+                                console.error('❌ File upload error:', error);
                                 failCount++;
                             }
                         }
                     } else {
-                        // Create folder
+                        // Create folder (including empty ones)
+                        console.log('📁 Creating folder:', key);
                         const folderNode = {
                             id: uid(),
                             name: key,
@@ -507,25 +576,37 @@ document.addEventListener('DOMContentLoaded', () => {
                             children: []
                         };
                         parentNode.children.push(folderNode);
+                        folderCount++;
                         
-                        // Recursively process subfolders
+                        // Recursively process subfolders (even if empty)
                         await processFolder(structure[key], folderNode);
                     }
                 }
             }
 
-            await processFolder(folderStructure, target);
+            try {
+                await processFolder(folderStructure, target);
+                console.log(`✅ Folder processing complete. Folders: ${folderCount}, Files Success: ${successCount}, Failed: ${failCount}`);
+            } catch (error) {
+                console.error('❌ Error processing folder:', error);
+            }
 
             uploadBtn.innerHTML = originalBtnText;
             uploadBtn.disabled = false;
             folderInput.value = ''; // Reset input
+            
+            console.log('🔄 Rendering resources...');
             renderResources();
             
-            if (successCount > 0) {
-                showToast(`Folder uploaded: ${successCount} file(s) uploaded successfully! Don't forget to save.`, 'success');
+            if (folderCount > 0 || successCount > 0) {
+                const message = `Folder uploaded: ${folderCount} folder(s), ${successCount} file(s) uploaded successfully! Don't forget to save.`;
+                showToast(message, 'success');
             }
             if (failCount > 0) {
                 showToast(`${failCount} file(s) failed to upload.`, 'error');
+            }
+            if (successCount === 0 && failCount === 0 && folderCount === 0) {
+                showToast('No files or folders were uploaded. Please check browser console for details.', 'warning');
             }
         });
 
