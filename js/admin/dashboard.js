@@ -376,11 +376,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const result = await response.json();
                     
                     // Add the uploaded file to the resource tree
+                    // Check if URL is already absolute (starts with http:// or https://)
+                    const fileUrl = result.file.url.startsWith('http') 
+                        ? result.file.url 
+                        : `${API_BASE_URL}${result.file.url}`;
+                    
                     target.children.push({ 
                         id: uid(), 
                         name: result.file.name, 
                         type: 'file', 
-                        url: `${API_BASE_URL}${result.file.url}`,
+                        url: fileUrl,
                         size: result.file.size,
                         uploadedAt: result.file.uploadedAt
                     });
@@ -551,11 +556,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const result = await response.json();
                                 console.log('✅ Upload successful:', result.file.name);
                                 
+                                // Check if URL is already absolute (starts with http:// or https://)
+                                const fileUrl = result.file.url.startsWith('http') 
+                                    ? result.file.url 
+                                    : `${API_BASE_URL}${result.file.url}`;
+                                
                                 parentNode.children.push({ 
                                     id: uid(), 
                                     name: result.file.name, 
                                     type: 'file', 
-                                    url: `${API_BASE_URL}${result.file.url}`,
+                                    url: fileUrl,
                                     size: result.file.size,
                                     uploadedAt: result.file.uploadedAt
                                 });
