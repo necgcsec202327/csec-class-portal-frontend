@@ -132,7 +132,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const a = document.createElement('a');
                 a.className = 'resource-item file';
                 a.setAttribute('role', 'listitem');
-                a.href = item.url;
+                // For PDFs, route via backend proxy to ensure correct headers/content-type
+                const isPdf = (item.url || '').toLowerCase().endsWith('.pdf');
+                const apiBase = (window.CONFIG && window.CONFIG.API_BASE_URL) ? window.CONFIG.API_BASE_URL : '';
+                a.href = (isPdf && apiBase)
+                    ? `${apiBase}/resources/proxy?url=${encodeURIComponent(item.url)}`
+                    : item.url;
                 a.target = '_blank';
                 a.rel = 'noopener noreferrer';
                 const subj = item.tags?.subject ? `<span class="badge" style="margin-left:6px;">${item.tags.subject}</span>` : '';

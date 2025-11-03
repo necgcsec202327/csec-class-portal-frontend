@@ -1393,52 +1393,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Clear All Files button
-    const clearFilesBtn = document.getElementById('clear-all-files');
-    if (clearFilesBtn) {
-        clearFilesBtn.addEventListener('click', async () => {
-            const confirm = window.confirm(
-                '⚠️ WARNING: This will delete ALL files from the database!\n\n' +
-                'Folders will be preserved, but all uploaded files will be removed.\n\n' +
-                'This is useful to clear broken file URLs after switching to Cloudinary.\n\n' +
-                'Are you absolutely sure you want to continue?'
-            );
-            
-            if (!confirm) return;
-            
-            try {
-                clearFilesBtn.disabled = true;
-                clearFilesBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Clearing...';
-                
-                const resp = await fetch(`${API_BASE_URL}/api/resources/clear-files`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
-                    }
-                });
-                
-                if (!resp.ok) {
-                    const error = await resp.text();
-                    throw new Error(error || 'Failed to clear files');
-                }
-                
-                const result = await resp.json();
-                showToast(result.message, 'success');
-                
-                // Reload resources to show updated tree
-                await loadResources();
-                renderResourceTree();
-                updateDashboardStats();
-            } catch (e) {
-                console.error('Clear files error:', e);
-                showToast(e.message || 'Failed to clear files', 'error');
-            } finally {
-                clearFilesBtn.disabled = false;
-                clearFilesBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Clear All Files';
-            }
-        });
-    }
-
     const saveTimetableBtn = document.getElementById('save-timetable');
     if (saveTimetableBtn) {
         saveTimetableBtn.addEventListener('click', async () => {
